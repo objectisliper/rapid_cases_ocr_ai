@@ -8,21 +8,23 @@ Delayed processing routines
 Michael Drozdovsky, 2020
 michael@drozdovsky.com
 """
+from multiprocessing.context import Process
+
 import cv2
 import logging
 import requests
 
-from conqueror.app import app
-from conqueror.io import VideoFile, Converter
-from conqueror.core import ImagePreprocessing, KeyFrameFinder, TextPostprocessor
-
+from .io import VideoFile, Converter
+from .core import KeyFrameFinder, TextPostprocessor
+from .rule_processor import QueryParser, RuleProcessor
+from .settings.local import DELAYED_RESPONSE_ENDPOINT, VIDEO_TEMP_DIR, CURSOR_DATA_SAMPLES
 
 logger = logging.getLogger('async_response')
 
 
 def delayed_response(resp_data):
     ret = requests.post(
-        app.config['DELAYED_RESPONSE_ENDPOINT'],
+        DELAYED_RESPONSE_ENDPOINT,
         json=resp_data
     ).json()
 
@@ -39,10 +41,31 @@ def delayed_process(request_data, qp, tp, tpp):
     """
     Main method for delayed request processing
     """
-    vf = VideoFile(request_data)
-    conv = Converter(app.config['VIDEO_TEMP_DIR'], max_hw=0)
-    vf = conv.process(vf)
+    result = process_video(qp, request_data, tp, tpp)
 
+    delayed_response(result)
+
+
+def process_request(request):
+    qp = QueryParser(request.data)
+    tp = RuleProcessor(qp.parse())
+    tpp = TextPostprocessor()
+
+    if qp.get_async_flag():
+        p = Process(target=delayed_process, args=(request.data, qp, tp, tpp))
+        p.start()
+        return {
+            'success': 1,
+            'status': 'processing'
+        }
+
+    return process_video(request.data, qp, tp, tpp)
+
+
+def process_video(qp, request_data, tp, tpp):
+    vf = VideoFile(request_data)
+    conv = Converter(VIDEO_TEMP_DIR, max_hw=0)
+    vf = conv.process(vf)
     vc = cv2.VideoCapture(vf.stored_file)
     finder = KeyFrameFinder(
         0.3,
@@ -52,22 +75,21 @@ def delayed_process(request_data, qp, tp, tpp):
     )
     finder.load_template(
         'cursor',
-        cv2.imread(app.config['CURSOR_DATA_SAMPLES'] + '2.png', 0)
+        cv2.imread(CURSOR_DATA_SAMPLES + '2.png', 0)
     )
     kframe, found, addr, xcpt, rtext = finder.select_keyframe2(None, vc)
     if found:
-        #v_ret = VideoFile().from_image(kframe)
-        ret = {
+        # v_ret = VideoFile().from_image(kframe)
+        result = {
             'case_id': qp.get_request_id(),
             'text_data': tpp.process(rtext),
             'matches': xcpt
         }
     else:
         xc, _ = tp.has_match('')
-        ret = {
+        result = {
             'case_id': qp.get_request_id(),
             'text_data': '',
             'matches': xc
         }
-
-    delayed_response(ret)
+    return result

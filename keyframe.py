@@ -35,6 +35,7 @@ class ImagePreprocessing(object):
     Class to preprocess images for better classification
     and object detection
     """
+
     @staticmethod
     def adjust_gamma(image, gamma=1.0):
         inv_gamma = 1.0 / gamma
@@ -46,13 +47,13 @@ class ImagePreprocessing(object):
     @staticmethod
     def exaggerate(image):
         # exaggerates regions of interest
-        image = image[..., 2] #- image[..., 1] - image[..., 2]
+        image = image[..., 2]  # - image[..., 1] - image[..., 2]
         ret, image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY)
         return image
 
     @staticmethod
     def highlight(image):
-        #hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        # hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         lower_red = np.array([150, 150, 150])
         upper_red = np.array([255, 255, 255])
 
@@ -68,11 +69,12 @@ class KeyFrameFinder(StatefulObject):
     (steady frame where selection is over and no
     or almost no motion is present)
     """
+
     class Meta:
         state_file = './trained/keyframefinder.obj'
 
     def __init__(self, motion_threshold=0.5, skip_frames=10,
-    object_detection_threshold=0.5):
+                 object_detection_threshold=0.5):
         self.threshold = motion_threshold
         self.skip_frames = skip_frames
         self.object_detection_threshold = object_detection_threshold
@@ -128,7 +130,7 @@ class KeyFrameFinder(StatefulObject):
             if not res:
                 break
 
-            #frame = ImagePreprocessing.exaggerate(frame)
+            # frame = ImagePreprocessing.exaggerate(frame)
 
             if not has_prev:
                 prev_frame = frame
@@ -193,14 +195,14 @@ class KeyFrameFinder(StatefulObject):
                 200
             )
             template = template_image
-            #template = cv2.Canny(template_image, 100, 200)
+            # template = cv2.Canny(template_image, 100, 200)
         else:
             gray = ImagePreprocessing.exaggerate(target_image)
             template = template_image
 
-        #cv2.imshow('Keyframe', template)
-        #cv2.waitKey()
-        #cv2.destroyAllWindows()
+        # cv2.imshow('Keyframe', template)
+        # cv2.waitKey()
+        # cv2.destroyAllWindows()
         (iH, iW) = gray.shape[:2]
 
         object_found = False
@@ -234,22 +236,22 @@ class KeyFrameFinder(StatefulObject):
                     object_loc = max_loc
 
                 # show it
-                #top_left = max_loc
-                #bottom_right = (top_left[0] + 50, top_left[1] + 50)
-                #cv2.rectangle(gray, top_left, bottom_right, (255,255,255),3)
+                # top_left = max_loc
+                # bottom_right = (top_left[0] + 50, top_left[1] + 50)
+                # cv2.rectangle(gray, top_left, bottom_right, (255,255,255),3)
 
-                #cv2.imwrite('res.png', gray)
+                # cv2.imwrite('res.png', gray)
 
-                #cv2.imshow('Keyframe', gray)
-                #cv2.waitKey()
-                #cv2.destroyAllWindows()
-                #return max_loc
+                # cv2.imshow('Keyframe', gray)
+                # cv2.waitKey()
+                # cv2.destroyAllWindows()
+                # return max_loc
 
         if object_found:
             print(f'MAX: {current_max}')
             top_left = object_loc
             bottom_right = (top_left[0] + 50, top_left[1] + 50)
-            cv2.rectangle(gray, top_left, bottom_right, (255,255,255),3)
+            cv2.rectangle(gray, top_left, bottom_right, (255, 255, 255), 3)
 
             cv2.imwrite('res.png', gray)
             return object_loc
@@ -271,61 +273,59 @@ class KeyFrameFinder(StatefulObject):
 
         print(des1)
 
-        #bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-        #matches = bf.match(des1, des2)
+        # bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        # matches = bf.match(des1, des2)
 
         # store all the good matches as per Lowe's ratio test.
-        #good_matches = []
-        #for m,n in matches:
+        # good_matches = []
+        # for m,n in matches:
         #    if m.distance < 0.7 * n.distance:
         #        good_matches.append(m)
 
-        #print(good_ma)
+        # print(good_ma)
 
-        #print(keypoints_target)
-        #print(keypoints_target[0].octave)
-
+        # print(keypoints_target)
+        # print(keypoints_target[0].octave)
 
 
 if __name__ == '__main__':
-    #src1 = np.float32(cv2.imread('./tests/test1.png', 0))
-    #src2 = np.float32(cv2.imread('./tests/test2.png', 0))
+    # src1 = np.float32(cv2.imread('./tests/test1.png', 0))
+    # src2 = np.float32(cv2.imread('./tests/test2.png', 0))
 
     # returns (shift, response) where shift is (x, y)
     # values of x-shift and y-shift and response is higher when
     # there was a single movement (and lower for multiple movements)
-    #ret = cv2.phaseCorrelate(src1, src2)
-    #print(ret)
-    #ret_x = ret[0][0] * np.cos(ret[1])
-    #ret_y = ret[0][1] * np.sin(ret[1])
-    #print(ret_x)
-    #print(ret_y)
+    # ret = cv2.phaseCorrelate(src1, src2)
+    # print(ret)
+    # ret_x = ret[0][0] * np.cos(ret[1])
+    # ret_y = ret[0][1] * np.sin(ret[1])
+    # print(ret_x)
+    # print(ret_y)
 
-    #vc = cv2.VideoCapture('./tests/output.mp4')
-    #finder = KeyFrameFinder(0.3, 10, object_detection_threshold=0.4)
-    #finder.load_template(
+    # vc = cv2.VideoCapture('./tests/output.mp4')
+    # finder = KeyFrameFinder(0.3, 10, object_detection_threshold=0.4)
+    # finder.load_template(
     #    'cursor',
     #    cv2.imread(config.CURSOR_DATA_SAMPLES + '2.png', 0)
-    #)
-    #kframe, found = finder.select_keyframe2(None, vc)
-    #if found:
+    # )
+    # kframe, found = finder.select_keyframe2(None, vc)
+    # if found:
     #    cv2.imshow('Keyframe', kframe)
     #    cv2.waitKey()
     #    cv2.destroyAllWindows()
-    #else:
+    # else:
     #    print('No keyframe found')
 
     src1 = cv2.imread('./tests/browser2.png')
     src2 = cv2.imread('./data/address_bar/2_r.png', 0)
     kff = KeyFrameFinder(skip_frames=2, object_detection_threshold=0.35)
     print(kff.find_object(src1, src2))
-    #src3 = ImagePreprocessing.exaggerate(src1)
-    #cv2.imshow('Keyframe', src3)
-    #cv2.waitKey()
-    #cv2.destroyAllWindows()
+    # src3 = ImagePreprocessing.exaggerate(src1)
+    # cv2.imshow('Keyframe', src3)
+    # cv2.waitKey()
+    # cv2.destroyAllWindows()
 
-
-    #print(KeyFrameFinder(object_detection_threshold=0.4).find_object(src1, src2))
-    #KeyFrameFinder().extended_find_object(src1, src2)
+    # print(KeyFrameFinder(object_detection_threshold=0.4).find_object(src1, src2))
+    # KeyFrameFinder().extended_find_object(src1, src2)
 
     print('FA')

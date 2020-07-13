@@ -1,0 +1,8 @@
+postgres:
+  database: sqlalchemy
+  user: root
+  password: dev
+  host: localhost
+  port: 3306
+  minsize: 1
+  maxsize: 5

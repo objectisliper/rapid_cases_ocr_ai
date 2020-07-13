@@ -38,6 +38,7 @@ class QueryParser(object):
     """
     Default query parser
     """
+
     def __init__(self, raw_text):
         self.raw = json.loads(raw_text)
         self.request_id = None
@@ -48,12 +49,12 @@ class QueryParser(object):
         return {
             'order': int(step_json.get('order', '0')),
             'url_contains': (
-                step_json.get('URLcondition', 'contains') == 'contains'
+                    step_json.get('URLcondition', 'contains') == 'contains'
             ),
             'url_text': step_json.get('URLtext', ''),
             'is_exact': step_json.get('exact', False),
             'page_contains': (
-                step_json.get('PageContentsCondition', 'contains') == 'contains'
+                    step_json.get('PageContentsCondition', 'contains') == 'contains'
             ),
             'page_text': step_json.get('PageText', ''),
             'use_or': (step_json.get('ConditionsLogic', 'or') == 'or')
@@ -91,6 +92,7 @@ class RuleProcessor(object):
     """
     Class that is used to process text based on rule matching
     """
+
     def __init__(self, rule_set):
         self.rules = rule_set
         print(rule_set)
@@ -126,7 +128,6 @@ class RuleProcessor(object):
                     break
 
         return matches
-
 
     def has_match(self, raw_text):
         # checking the text against the rules

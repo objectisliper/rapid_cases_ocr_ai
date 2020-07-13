@@ -1,0 +1,4 @@
+/venv/
+/.idea/
+/service/conqueror/settings/database.yaml
+/service/conqueror/settings/local.py
