@@ -21,6 +21,25 @@ from .settings.local import DELAYED_RESPONSE_ENDPOINT, VIDEO_TEMP_DIR, CURSOR_DA
 
 logger = logging.getLogger('async_response')
 
+default_rule = """
+    {
+        "rules": [{
+    	"id": 151212,
+        "steps": [
+    	    {
+                "order": 0,
+                "URLcondition": "!contains",
+                "exact": 0,
+                "URLtext": "someth",
+                "ConditionsLogic": "and",
+                "PageContentsCondition": "contains",
+                "PageText": "exception"
+    	    }
+          ]
+    }]
+    }
+    """
+
 
 def delayed_response(resp_data):
     ret = requests.post(
@@ -47,7 +66,7 @@ def delayed_process(request_data, qp, tp, tpp):
 
 
 def process_request(request):
-    qp = QueryParser(request.data)
+    qp = QueryParser(default_rule)
     tp = RuleProcessor(qp.parse())
     tpp = TextPostprocessor()
 
@@ -62,7 +81,7 @@ def process_request(request):
     return process_video(request.data, qp, tp, tpp)
 
 
-def process_video(qp, request_data, tp, tpp):
+def process_video(request_data, qp, tp, tpp):
     vf = VideoFile(request_data)
     conv = Converter(VIDEO_TEMP_DIR, max_hw=0)
     vf = conv.process(vf)
@@ -78,6 +97,7 @@ def process_video(qp, request_data, tp, tpp):
         cv2.imread(CURSOR_DATA_SAMPLES + '2.png', 0)
     )
     kframe, found, addr, xcpt, rtext = finder.select_keyframe2(None, vc)
+    print(rtext)
     if found:
         # v_ret = VideoFile().from_image(kframe)
         result = {

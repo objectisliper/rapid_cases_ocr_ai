@@ -4,8 +4,8 @@
 ```
 sudo apt install python3-dev &&
 sudo apt-get install mysql-server &&
-sudo apt-get install libmariadbclient-dev &&
-sudo apt-get install libmysqlclient-dev
+sudo apt-get install libmysqlclient-dev &&
+sudo apt install ffmpeg
 ```
 - Set up mysql
 https://www.digitalocean.com/community/tutorials/mysql-ubuntu-18-04-ru

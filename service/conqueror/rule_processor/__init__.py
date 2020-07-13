@@ -46,6 +46,7 @@ class QueryParser(object):
 
     def parse_step(self, step_json):
         # parses one step to the rule data
+        # TODO awful mapper
         return {
             'order': int(step_json.get('order', '0')),
             'url_contains': (

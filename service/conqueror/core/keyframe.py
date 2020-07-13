@@ -11,6 +11,7 @@ import imutils
 import numpy as np
 import pytesseract
 
+from .preprocessing import ImagePreprocessing
 from .base import StatefulObject
 from .text_detection import TextExtractor, TextPostprocessor
 
@@ -109,23 +110,24 @@ class KeyFrameFinder(StatefulObject):
         return None, False
 
     def select_keyframe2(self, motion_data, video_handler):
-        cursor = self.templates.get('cursor', None)
-        if not cursor.any():
-            raise Exception('No cursor training data found')
+        # cursor = self.templates.get('cursor', None)
+        # if not cursor.any():
+        #     raise Exception('No cursor training data found')
 
         while (True):
             res, frame = video_handler.read()
             if not res:
                 break
 
-            object_loc = self.find_object(frame, cursor)
-            if object_loc:
-                rtext = pytesseract.image_to_string(frame[..., 0])
-                mm, has_any = self.te.has_exception(rtext)
-                if has_any:
-                    #excpt = self.te.extract_exception(rtext)
-                    addr = self.te.extract_address(rtext)
-                    return frame, True, addr, mm, rtext
+            # object_loc = self.find_object(frame)
+            # if object_loc:
+            rtext = pytesseract.image_to_string(frame[..., 0])
+            print('KeyFrameFinder.select_keyframe2 method', rtext)
+            mm, has_any = self.te.has_exception(rtext)
+            if has_any:
+                #excpt = self.te.extract_exception(rtext)
+                addr = self.te.extract_address(rtext)
+                return frame, True, addr, mm, rtext
 
             for i in range(self.skip_frames):
                 video_handler.read()
