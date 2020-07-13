@@ -65,20 +65,20 @@ def delayed_process(request_data, qp, tp, tpp):
     delayed_response(result)
 
 
-def process_request(request):
+def process_request(data):
     qp = QueryParser(default_rule)
     tp = RuleProcessor(qp.parse())
     tpp = TextPostprocessor()
 
     if qp.get_async_flag():
-        p = Process(target=delayed_process, args=(request.data, qp, tp, tpp))
+        p = Process(target=delayed_process, args=(data, qp, tp, tpp))
         p.start()
         return {
             'success': 1,
             'status': 'processing'
         }
 
-    return process_video(request.data, qp, tp, tpp)
+    return process_video(data, qp, tp, tpp)
 
 
 def process_video(request_data, qp, tp, tpp):
