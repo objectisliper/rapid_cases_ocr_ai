@@ -28,7 +28,7 @@ meta = MetaData()
 
 class JobModel:
     schema = Table(
-        'jobs', meta,
+        'Jobs', meta,
 
         Column('JobId', Integer, primary_key=True, autoincrement=True),
         Column('Created_Date', DateTime, default=datetime.utcnow()),
