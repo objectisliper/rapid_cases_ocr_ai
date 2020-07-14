@@ -49,7 +49,8 @@ class JobModel:
     @staticmethod
     @database_connection
     def insert_fake_data(connection):
-        video_path = (pathlib.Path(__file__).parent.parent / 'temp' / '7bbfc76b.mp4').as_posix()
+        video_path = (pathlib.Path(
+            __file__).parent.parent / 'conqueror' / 'tests' / 'integration_tests_video' / '7bbfc76b.mp4').as_posix()
         connection.execute(JobModel.schema.insert(values=[
             {'Status': JobStatuses.Created, 'Local_File_Path': video_path},
             {'Status': JobStatuses.Uploaded, 'Local_File_Path': video_path},
@@ -58,19 +59,38 @@ class JobModel:
         ]))
 
     @database_connection
+    def job_start_processing(self, connection):
+        connection.execute(self.schema
+                           .update()
+                           .where(self.schema.c.JobId == self.id)
+                           .values(Recognition_Started_On=datetime.utcnow()))
+
+    @database_connection
     def job_processed(self, recognition_text, connection):
         connection.execute(self.schema
                            .update()
                            .where(self.schema.c.JobId == self.id)
-                           .values(Status=JobStatuses.Recognized, Recognition_Text=recognition_text))
+                           .values(Status=JobStatuses.Recognized, Recognition_Text=recognition_text,
+                                   Recognition_Competed_On=datetime.utcnow()))
 
 
 @database_connection
 def select_uploaded_jobs(connection) -> List[JobModel]:
     result = []
-    for row in connection.execute(JobModel.schema.select()):
+    for row in connection.execute(JobModel.schema.select()
+                                          .where(JobModel.schema.c.Status == JobStatuses.Uploaded)
+                                          .where(JobModel.schema.c.Recognition_Started_On == None)):
         result.append(JobModel(row))
     return result
+
+
+@database_connection
+def select_job_by_id(job_id, connection) -> JobModel:
+    jobs = list(connection.execute(JobModel.schema.select()
+                                   .where(JobModel.schema.c.JobId == job_id)))
+    if len(jobs) < 1:
+        raise Exception(f'Job with id - {job_id}, does not exist')
+    return JobModel(jobs[0])
 
 
 models_list = [

@@ -14,8 +14,6 @@ def create_tables(engine):
             connection.execute(f'DROP TABLE IF EXISTS {model.schema.name}')
             connection.execute(CreateTable(model.schema))
             model.insert_fake_data()
-            for job in select_uploaded_jobs():
-                job.job_processed('test_text')
 
 
 def init_db():

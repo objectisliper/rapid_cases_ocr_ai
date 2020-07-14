@@ -3,3 +3,8 @@
 /service/conqueror/settings/database.yaml
 /service/conqueror/settings/local.py
 /service/temp/
+/celerybeat.pid
+/celerybeat-schedule
+/beat.log
+/deploy_tools/deploy_local.yaml
+/sockets/

@@ -72,7 +72,7 @@ Default credentials to admin is login - guest , and password - guest
 - On local machine or for test you can use terminal workers and beats, like this:
 
 ```
-celery -A service/conqueror/scheduling.py worker -l info
+celery -A service.conqueror.scheduling worker -l info
 ```
 
 #VPS SETUP
@@ -84,3 +84,22 @@ sudo apt install python3-dev &&
 sudo apt-get install mysql-server &&
 sudo apt-get install libmysqlclient-dev
 ```
+
+#DEPLOY
+
+Don't forget to setup configs in deploy_tools/deploy_local.yaml, start from copying example:
+
+```
+cp deploy_tools/deploy_local.yaml.example deploy_tools/deploy_local.yaml
+```
+
+After all needed services was installed, and python virtual environment
+setup, just type
+```
+sudo su
+```
+```
+. venv/bin/activate &&
+fab -f deploy_tools/fabfile.py deploy
+```
+from root directory.
