@@ -33,4 +33,4 @@ def process_video(job_id):
     job.job_processed(result.get('text_data'))
 
 
-celery_broker.add_periodic_task(schedule=10.0, sig=get_videos_to_process.s(), queue='recognizer_scheduling')
+celery_broker.add_periodic_task(schedule=60.0, sig=get_videos_to_process.s(), queue='recognizer_scheduling')
