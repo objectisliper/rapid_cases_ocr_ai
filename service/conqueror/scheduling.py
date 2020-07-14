@@ -9,7 +9,6 @@ from kombu import Exchange, Queue
 from app import celery_broker
 from service.conqueror.db_models import select_uploaded_jobs, select_job_by_id
 from service.conqueror.managers import process_request
-from service.conqueror.settings.local import CELERY_BROKER_URL
 
 
 @celery_broker.task
