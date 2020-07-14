@@ -3,7 +3,9 @@
 
 ```
 sudo apt install python3-dev &&
-sudo apt-get install mysql-server &&
+sudo apt install python3-venv &&
+sudo apt install tesseract-ocr &&
+sudo apt install libtesseract-dev &&
 sudo apt-get install libmysqlclient-dev &&
 sudo apt install ffmpeg
 ```
@@ -12,7 +14,6 @@ https://www.digitalocean.com/community/tutorials/mysql-ubuntu-18-04-ru
 
 - in project base directory
 ```
-mkdir logs
 cp service/conqueror/settings/local.py.example service/conqueror/settings/local.py && 
 cp service/conqueror/settings/database.yaml.example service/conqueror/settings/database.yaml
 ```
