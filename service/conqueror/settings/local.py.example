@@ -1,0 +1,9 @@
+import pathlib
+
+PORT = 8000
+DEBUG = True
+
+DELAYED_RESPONSE_ENDPOINT = 'https://case-classifier-developer-edition.na174.force.com/cc/services/apexrest/acceptInfo'
+VIDEO_TEMP_DIR = (pathlib.Path(__file__).parent.parent.parent / 'temp').as_posix()
+CURSOR_DATA_SAMPLES = '/Users/drozdovsky/workspace/conqueror/data/cursors/'
+CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672'

@@ -19,8 +19,8 @@ class TextExtractor(StatefulObject):
     def has_exception(self, some_text):
         some_text = some_text.lower().strip()
         ret, has_any_matches = self.processor.has_match(some_text)
-        print(ret)
-        print(has_any_matches)
+        print('TextExtractor.has_exception method', ret)
+        print('TextExtractor.has_exception method', has_any_matches)
         return ret, has_any_matches
 
     def extract_address(self, some_text):
