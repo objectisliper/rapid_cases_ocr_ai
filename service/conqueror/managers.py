@@ -8,17 +8,15 @@ Delayed processing routines
 Michael Drozdovsky, 2020
 michael@drozdovsky.com
 """
+import json
 from multiprocessing.context import Process
 
 import cv2
 import logging
-import requests
 
-from service.conqueror.io.video_saver import VideoSaver
+from .core.keyframe import KeyFrameFinder
 from .io import VideoFile, Converter
-from .core import KeyFrameFinder, TextPostprocessor
-from .rule_processor import QueryParser, RuleProcessor
-from .settings.local import DELAYED_RESPONSE_ENDPOINT, VIDEO_TEMP_DIR, CURSOR_DATA_SAMPLES
+from .utils import save_video_to_temporary_directory
 
 logger = logging.getLogger('async_response')
 
@@ -42,76 +40,25 @@ default_rule = """
     """
 
 
-def delayed_response(resp_data):
-    ret = requests.post(
-        DELAYED_RESPONSE_ENDPOINT,
-        json=resp_data
-    ).json()
-
-    logger.warning(resp_data)
-    if 'response_code' in ret:
-        logger.warning('Data sent to endpoint\n%s' % str(ret))
-    else:
-        logger.error('Error sending data to endpoint\n%s' % str(ret))
-
-    # TODO: add response processing
-
-
-def delayed_process(request_data, qp, tp, tpp, vp):
-    """
-    Main method for delayed request processing
-    """
-    result = process_video(qp, request_data, tp, tpp, vp)
-
-    delayed_response(result)
-
-
 def process_request(data):
-    qp = QueryParser(default_rule)
-    tp = RuleProcessor(qp.parse())
-    tpp = TextPostprocessor()
-    # vp = Converter(VIDEO_TEMP_DIR, max_hw=0)
-    vp = VideoSaver(VIDEO_TEMP_DIR, max_hw=0)
-
-    if qp.get_async_flag():
-        p = Process(target=delayed_process, args=(data, qp, tp, tpp, vp))
-        p.start()
-        return {
-            'success': 1,
-            'status': 'processing'
-        }
-
-    return process_video(data, qp, tp, tpp, vp)
+    return process_video(data)
 
 
-def process_video(request_data, qp, tp, tpp, vp):
-    vf = VideoFile(request_data)
-    vf = vp.process(vf)
-    vc = cv2.VideoCapture(vf.stored_file)
-    finder = KeyFrameFinder(
-        0.3,
-        10,
-        object_detection_threshold=0.4,
-        text_processor=tp
-    )
-    finder.load_template(
-        'cursor',
-        cv2.imread(CURSOR_DATA_SAMPLES + '2.png', 0)
-    )
-    kframe, found, addr, xcpt, rtext = finder.select_keyframe2(None, vc)
-    print(rtext)
-    if found:
-        # v_ret = VideoFile().from_image(kframe)
-        result = {
-            'case_id': qp.get_request_id(),
-            'text_data': tpp.process(rtext),
-            'matches': xcpt
-        }
-    else:
-        xc, _ = tp.has_match('')
-        result = {
-            'case_id': qp.get_request_id(),
-            'text_data': '',
-            'matches': xc
-        }
-    return result
+def process_video(request_data: str):
+    data = json.loads(request_data)
+
+    video_file = VideoFile(request_data)
+    video_file.stored_file = save_video_to_temporary_directory(video_file)
+    # TODO Need preprocessing, maybe creating a pictures and preprocess image
+    captured_video = cv2.VideoCapture(video_file.stored_file)
+    keyframe_finder = KeyFrameFinder(0.3, 10, object_detection_threshold=0.4,
+                                     search_phrases=data['SearchPhraseIdentifiers'], url_contains=data['URLContains'],
+                                     text_contains=data['TextContains'])
+
+    found_lines, url_contains_results, text_contains_result = keyframe_finder.process_keyframes(captured_video)
+
+    return {
+        'SearchPhrasesFound': found_lines,
+        'URLContainsResults': url_contains_results,
+        'TextContainsResults': text_contains_result
+    }

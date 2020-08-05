@@ -41,16 +41,8 @@ class VideoFile(object):
     def load(self, raw_data):
         raw = json.loads(raw_data)
 
-        if 'video' in raw and 'checksum' in raw:
-            reference_sign = VideoFile._sign(raw['video'])
-            if reference_sign != raw['checksum']:
-                raise Exception(f'Invalid video checksum. Expected {reference_sign}')
-
-            self.video_data = base64.b64decode(raw['video'])
-            self.signature = raw['checksum']
-
-            if 'format' in raw:
-                self.format = raw['format']
+        if 'VideoBody' in raw:
+            self.video_data = base64.b64decode(raw['VideoBody'])
         else:
             raise Exception('Invalid data supplied')
 

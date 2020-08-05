@@ -6,6 +6,23 @@ from unittest import TestCase
 
 from service.conqueror.managers import process_request
 
+# Таким образом JSON типичного запроса будет выглядеть примерно так
+# {
+# SearchPhraseIdentifiers:["error", "exception"],
+# URLContains:["wpadmin", "wordpress.com"], //тут будет полный массив со ВСЕХ рулов
+# TextContains:["MySQL", "MariaDB"], //тут будет полный массив со ВСЕХ рулов
+# VideoBody: "sfasfadfa23dflskf;l….sdfasf"
+# }
+#
+#
+# Ответ на такой запрос должен быть примерно такой
+# {
+# SearchPhrasesFound:["Contact validation error: Last name is missing.",
+# "Mysql error: username and password are not correct"],
+# URLContainsResults:["wpadmin"=true, "wordpress.com"=false], //найдено было каждое слово в урле или нет
+# TextContainsResults:["MySQL"=true, "MariaDB"=false], // найдено было каждое слово в урле или нет
+# }
+
 
 class ProcessRequestIntegrationTest(TestCase):
 
@@ -16,15 +33,18 @@ class ProcessRequestIntegrationTest(TestCase):
         config_path = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / '2730cfc6.webm').as_posix()
         request = {}
         with open(config_path, 'rb') as video:
-            request['video'] = base64.b64encode(video.read()).decode('utf-8')
-        raw_sign = zlib.crc32(request['video'].encode('utf-8')) & 0xffffffff
-        request['checksum'] = '{:08x}'.format(raw_sign)
-        request['format'] = 'webm'
+            request['VideoBody'] = base64.b64encode(video.read()).decode('utf-8')
+
+        request['SearchPhraseIdentifiers'] = ["error", "exception"]
+        request['URLContains'] = ["wpadmin", "force.com"]
+        request['TextContains'] = ["Contact Form", "MariaDB"]
+
         json_encoded_request = json.dumps(request)
         result = process_request(json_encoded_request)
 
-        self.assertIn('&        Home @x Hor x + - a x C  @ onlinestore-developer-editionnat74force.com/mystore/s/ x '
-                      '© @ Error Contact Form System DmlException: Insert failed. First exception on row O; '
-                      'first erro Tag No eae eh ea [LastName FirstName  Last Name  fered  '
-                      'Npsnoxenito onlinestore-developer-edition.na174force.com npegocrasnen AOCTyn K BaUleMy skpaHy  '
-                      '1545 Aa ans gE 20.03.2020 Oo', result['text_data'])
+        self.assertIn('Contact Form System DmlException: Insert failed. First exception on row O; first erro Tag No '
+                      'eae eh ea [LastName', result['SearchPhrasesFound'][0])
+
+        self.assertTrue(result['URLContainsResults']['force.com'])
+
+        self.assertTrue(result['TextContainsResults']['Contact Form'])

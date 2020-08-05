@@ -46,4 +46,6 @@ pyyaml==5.3.1
 pymysql==0.9.3
 celery==4.4.6
 fabric3==1.14.post1
+fuzzywuzzy==0.18.0
+python-Levenshtein==0.12.0
 

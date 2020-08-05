@@ -6,179 +6,87 @@ of different software error occurrences
 Michael Drozdovsky, 2020
 michael@drozdovsky.com
 """
-import cv2
-import imutils
-import numpy as np
 import pytesseract
-
-from .preprocessing import ImagePreprocessing
-from .base import StatefulObject
-from .text_detection import TextExtractor, TextPostprocessor
+from fuzzywuzzy import fuzz
 
 
-class KeyFrameFinder(StatefulObject):
-    """
-    Class that contains methods to find a keyframe
-    (steady frame where selection is over and no
-    or almost no motion is present)
-    """
-    class Meta:
-        state_file = './trained/keyframefinder.obj'
+class KeyFrameFinder:
+    found_lines = []
+    url_contains_result = {}
+    text_contains_result = {}
+    needed_ratio = 85
 
     def __init__(self, motion_threshold=0.5, skip_frames=100,
-    object_detection_threshold=0.5, text_processor=None):
+                 object_detection_threshold=0.5, search_phrases: [str] = [], url_contains: [str] = [],
+                 text_contains: [str] = []):
+
         self.threshold = motion_threshold
-        self.skip_frames = 50 #skip_frames
+        self.skip_frames = 50  # skip_frames
         self.object_detection_threshold = object_detection_threshold
 
+        self.search_phrases = search_phrases
+
+        for key in url_contains:
+            self.url_contains_result[key] = False
+
+        for key in text_contains:
+            self.text_contains_result[key] = False
+
         self.templates = {}
-        self.te = TextExtractor(processor=text_processor)
 
-        super(KeyFrameFinder, self).__init__()
+    def process_keyframes(self, video_handler) -> ([str], dict, dict):
 
-    def load_template(self, name, template_data):
-        # loads new template into self.templates
-        # no additional preprocessing as for now
-        self.templates[name] = template_data
-
-    def motion_data(self, video_handler):
-        # extracts motion data from open video_handler
-        # in the form of (x-motion, y-motion, has_single_motion)
-        ret = []
-        prev_frame, has_prev = None, False
-        while (True):
-            res, frame = video_handler.read()
-            if not res:
+        while True:
+            result, frame = video_handler.read()
+            print('keyframe step')
+            if not result:
                 break
 
-            frame = np.float32(frame[..., 0])
+            text_by_lines = self.__combine_by_line_number(pytesseract.image_to_data(frame[..., 0], output_type='dict'))
 
-            if has_prev:
-                diff = cv2.phaseCorrelate(prev_frame, frame)
-                has_single_motion = diff[1] > self.threshold
-                ret.append((int(diff[0][0]), int(diff[0][1]), has_single_motion))
+            self.__check_is_special_contains(''.join(text_by_lines))
+
+            for line_text in text_by_lines:
+                if line_text == '':
+                    continue
+
+                self.__save_if_keyphrase(line_text)
+
+            for i in range(self.skip_frames):
+                video_handler.read()
+
+        return self.found_lines, self.url_contains_result, self.text_contains_result
+
+    def __check_is_special_contains(self, whole_page_text):
+        for key in self.url_contains_result.keys():
+            if len(whole_page_text) >= len(key) and fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio:
+                self.url_contains_result[key] = True
+
+        for key in self.text_contains_result.keys():
+            if len(whole_page_text) >= len(key) and fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio:
+                self.text_contains_result[key] = True
+
+    def __save_if_keyphrase(self, text):
+
+        for phrase in self.search_phrases:
+            if len(text) >= len(phrase) and text not in self.found_lines and \
+                    fuzz.partial_ratio(phrase, text) >= self.needed_ratio:
+                self.found_lines.append(text)
+
+    def __combine_by_line_number(self, image_data: dict, lines_in_string: int = 1):
+        result_list = []
+
+        for index, value in enumerate(image_data['line_num']):
+            line_next_word = image_data['text'][index]
+
+            if value > 0 and lines_in_string > 1:
+                value = int(((value + 1) - (value + 1) % lines_in_string) / lines_in_string)
+                if value > 0:
+                    value -= 1
+
+            if len(result_list) >= value + 1:
+                result_list[value] = result_list[value] + ' ' + line_next_word
             else:
-                has_prev = True
+                result_list.append(line_next_word)
 
-            prev_frame = frame
-
-            for i in range(self.skip_frames):
-                video_handler.read()
-
-        return ret
-
-    def select_keyframe(self, motion_data, video_handler):
-        # selects keyframe based on motion_data and video_handler video data and
-        # returns keyframe image
-        has_cursor = []
-        cursor = self.templates.get('cursor', None)
-        if not cursor.any():
-            raise Exception('No cursor training data found')
-
-        cursor_in, ic, prev_posx = 0, 0, 0
-        prev_frame, has_prev = None, False
-        while (True):
-            res, frame = video_handler.read()
-            if not res:
-                break
-
-            #frame = ImagePreprocessing.exaggerate(frame)
-
-            if not has_prev:
-                prev_frame = frame
-                has_prev = True
-                continue
-
-            ic += 1
-            object_loc = self.find_object(frame, cursor)
-            if object_loc:
-                if abs(prev_posx - object_loc[1]) > 0:
-                    prev_posx = object_loc[1]
-                    cursor_in += 1
-            else:
-                if cursor_in > 3:
-                    # we had cursor appearing and then it disappeared
-                    # so here is our keyframe
-                    return frame, True
-                cursor_in = 0
-
-            prev_frame = frame
-
-            for i in range(self.skip_frames):
-                video_handler.read()
-
-        return None, False
-
-    def select_keyframe2(self, motion_data, video_handler):
-        # cursor = self.templates.get('cursor', None)
-        # if not cursor.any():
-        #     raise Exception('No cursor training data found')
-
-        while (True):
-            res, frame = video_handler.read()
-            if not res:
-                break
-
-            # object_loc = self.find_object(frame)
-            # if object_loc:
-            rtext = pytesseract.image_to_string(frame[..., 0])
-            print('KeyFrameFinder.select_keyframe2 method', rtext)
-            mm, has_any = self.te.has_exception(rtext)
-            if has_any:
-                #excpt = self.te.extract_exception(rtext)
-                addr = self.te.extract_address(rtext)
-                return frame, True, addr, mm, rtext
-
-            for i in range(self.skip_frames):
-                video_handler.read()
-
-        return None, False, None, None, ''
-
-    def find_object(self, target_image, template_image, canny=True):
-        # finds object described by template_image on image
-        # described by target_image
-        if canny:
-            gray = cv2.Canny(
-                cv2.cvtColor(target_image, cv2.COLOR_BGR2GRAY),
-                100,
-                200
-            )
-            template = template_image
-            #template = cv2.Canny(template_image, 100, 200)
-        else:
-            gray = ImagePreprocessing.exaggerate(target_image)
-            template = template_image
-
-        (iH, iW) = gray.shape[:2]
-
-        object_found = False
-        object_loc = None
-        current_max = 0.0
-
-        for scale in np.linspace(0.1, 2.0, 50)[::-1]:
-            resized = imutils.resize(
-                template, width=int(template.shape[1] * scale)
-            )
-
-            if resized.shape[0] > iH or resized.shape[1] > iW:
-                break
-
-            res = cv2.matchTemplate(gray, resized, cv2.TM_CCOEFF)
-            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-
-            delta = 0
-            if max_val != 0:
-                delta = abs((abs(max_val) - abs(min_val)) / abs(max_val))
-
-            if delta > self.object_detection_threshold:
-                # object found
-                object_found = True
-
-                if delta > current_max:
-                    current_max = delta
-                    object_loc = max_loc
-
-        if object_found:
-            return object_loc
-
-        return None
+        return result_list

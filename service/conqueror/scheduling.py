@@ -24,13 +24,15 @@ def process_video(job_id):
     job = select_job_by_id(job_id)
     data = {}
     with open(job.local_path, 'rb') as video:
-        data['video'] = base64.b64encode(video.read()).decode('utf-8')
-    raw_sign = zlib.crc32(data['video'].encode('utf-8')) & 0xffffffff
-    data['checksum'] = '{:08x}'.format(raw_sign)
+        data['VideoBody'] = base64.b64encode(video.read()).decode('utf-8')
+
+    data['SearchPhraseIdentifiers'] = ["error", "exception"]
+    data['URLContains'] = ["wpadmin", "wordpress.com"]
+    data['TextContains'] = ["MySQL", "MariaDB"]
     json_encoded_request = json.dumps(data)
     result = process_request(json_encoded_request)
+    print('end processing')
+    job.job_processed('\n '.join(result.get('SearchPhrasesFound')))
 
-    job.job_processed(result.get('text_data'))
 
-
-celery_broker.add_periodic_task(schedule=60.0, sig=get_videos_to_process.s(), queue='recognizer_scheduling')
+celery_broker.add_periodic_task(schedule=120.0, sig=get_videos_to_process.s(), queue='recognizer_scheduling')
