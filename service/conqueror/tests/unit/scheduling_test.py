@@ -18,9 +18,11 @@ class JobMock:
 def get_expected_result_json():
     data = {}
     with open(JobMock.Local_File_Path, 'rb') as video:
-        data['video'] = base64.b64encode(video.read()).decode('utf-8')
-    raw_sign = zlib.crc32(data['video'].encode('utf-8')) & 0xffffffff
-    data['checksum'] = '{:08x}'.format(raw_sign)
+        data['VideoBody'] = base64.b64encode(video.read()).decode('utf-8')
+
+    data['SearchPhraseIdentifiers'] = ["error", "exception"]
+    data['URLContains'] = ["wpadmin", "wordpress.com"]
+    data['TextContains'] = ["MySQL", "MariaDB"]
     return json.dumps(data)
 
 
@@ -38,7 +40,7 @@ class SchedulingTaskTestCase(TestCase):
         process_video.assert_called_once_with(JobMock.JobId)
         job_start_processing.assert_called_once()
 
-    @patch('service.conqueror.scheduling.process_request', return_value={'text_data': 'some text'})
+    @patch('service.conqueror.scheduling.process_request', return_value={'SearchPhrasesFound': ['some text']})
     @patch.object(JobModel, 'job_processed')
     @patch('service.conqueror.scheduling.select_job_by_id', return_value=JobModel(JobMock))
     def test_process_video(self, select_job_by_id, job_processed, process_request):

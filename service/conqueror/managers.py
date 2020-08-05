@@ -15,7 +15,7 @@ import cv2
 import logging
 
 from .core.keyframe import KeyFrameFinder
-from .io import VideoFile, Converter
+from .io import VideoFile
 from .utils import save_video_to_temporary_directory
 
 logger = logging.getLogger('async_response')
