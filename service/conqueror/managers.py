@@ -14,6 +14,7 @@ import cv2
 import logging
 import requests
 
+from service.conqueror.io.video_saver import VideoSaver
 from .io import VideoFile, Converter
 from .core import KeyFrameFinder, TextPostprocessor
 from .rule_processor import QueryParser, RuleProcessor
@@ -56,11 +57,11 @@ def delayed_response(resp_data):
     # TODO: add response processing
 
 
-def delayed_process(request_data, qp, tp, tpp):
+def delayed_process(request_data, qp, tp, tpp, vp):
     """
     Main method for delayed request processing
     """
-    result = process_video(qp, request_data, tp, tpp)
+    result = process_video(qp, request_data, tp, tpp, vp)
 
     delayed_response(result)
 
@@ -69,22 +70,23 @@ def process_request(data):
     qp = QueryParser(default_rule)
     tp = RuleProcessor(qp.parse())
     tpp = TextPostprocessor()
+    # vp = Converter(VIDEO_TEMP_DIR, max_hw=0)
+    vp = VideoSaver(VIDEO_TEMP_DIR, max_hw=0)
 
     if qp.get_async_flag():
-        p = Process(target=delayed_process, args=(data, qp, tp, tpp))
+        p = Process(target=delayed_process, args=(data, qp, tp, tpp, vp))
         p.start()
         return {
             'success': 1,
             'status': 'processing'
         }
 
-    return process_video(data, qp, tp, tpp)
+    return process_video(data, qp, tp, tpp, vp)
 
 
-def process_video(request_data, qp, tp, tpp):
+def process_video(request_data, qp, tp, tpp, vp):
     vf = VideoFile(request_data)
-    conv = Converter(VIDEO_TEMP_DIR, max_hw=0)
-    vf = conv.process(vf)
+    vf = vp.process(vf)
     vc = cv2.VideoCapture(vf.stored_file)
     finder = KeyFrameFinder(
         0.3,

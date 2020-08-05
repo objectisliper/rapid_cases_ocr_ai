@@ -28,7 +28,7 @@ class KeyFrameFinder(StatefulObject):
     def __init__(self, motion_threshold=0.5, skip_frames=100,
     object_detection_threshold=0.5, text_processor=None):
         self.threshold = motion_threshold
-        self.skip_frames = 200 #skip_frames
+        self.skip_frames = 50 #skip_frames
         self.object_detection_threshold = object_detection_threshold
 
         self.templates = {}
