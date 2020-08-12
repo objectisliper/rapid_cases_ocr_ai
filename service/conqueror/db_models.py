@@ -23,6 +23,11 @@ class JobStorageStatuses(enum.Enum):
     Error = 'Error'
 
 
+class JobStorageTypes(enum.Enum):
+    Amazon_S3 = 'Amazon S3'
+    Default = 'Default'
+
+
 meta = MetaData()
 
 
@@ -30,7 +35,8 @@ class JobModel:
     schema = Table(
         'Jobs', meta,
 
-        Column('JobId', Integer, primary_key=True, autoincrement=True),
+        Column('id', Integer, primary_key=True, autoincrement=True),
+        Column('JobId', String(256), unique=True),
         Column('Created_Date', DateTime, default=datetime.utcnow()),
         Column('Recognition_Started_On', DateTime, nullable=True),
         Column('Recognition_Competed_On', DateTime, nullable=True),
@@ -38,11 +44,13 @@ class JobModel:
         Column('Local_File_Path', Text, nullable=False),
         Column('Recognition_Text', Text, nullable=True),
         Column('Storage_Status', Enum(JobStorageStatuses), nullable=True),
+        Column('Storage_Name', String(128), nullable=True)
 
     )
 
     def __init__(self, row):
         self.id = row.JobId
+        self.storage_name = row.Storage_Name
         self.__status = row.Status
         self.local_path = row.Local_File_Path
 
@@ -52,10 +60,14 @@ class JobModel:
         video_path = (pathlib.Path(
             __file__).parent.parent / 'conqueror' / 'tests' / 'integration_tests_video' / '7bbfc76b.mp4').as_posix()
         connection.execute(JobModel.schema.insert(values=[
-            {'Status': JobStatuses.Created, 'Local_File_Path': video_path},
-            {'Status': JobStatuses.Uploaded, 'Local_File_Path': video_path},
-            {'Status': JobStatuses.Recognized, 'Local_File_Path': video_path},
-            {'Status': JobStatuses.Deleted, 'Local_File_Path': video_path},
+            {'Status': JobStatuses.Created, 'Local_File_Path': video_path,
+             'Storage_Name': JobStorageTypes.Default.value, 'JobId': 'test 1'},
+            {'Status': JobStatuses.Uploaded, 'Local_File_Path': video_path,
+             'Storage_Name': JobStorageTypes.Amazon_S3.value, 'JobId': 'test 2'},
+            {'Status': JobStatuses.Recognized, 'Local_File_Path': video_path,
+             'Storage_Name': JobStorageTypes.Default.value, 'JobId': 'test 3'},
+            {'Status': JobStatuses.Deleted, 'Local_File_Path': video_path,
+             'Storage_Name': JobStorageTypes.Default.value, 'JobId': 'test 4'},
         ]))
 
     @database_connection

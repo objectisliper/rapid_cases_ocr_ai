@@ -1,14 +1,10 @@
 import base64
 import json
-import zlib
-
-from celery import Celery
-from celery.schedules import crontab
-from kombu import Exchange, Queue
 
 from app import celery_broker
-from service.conqueror.db_models import select_uploaded_jobs, select_job_by_id
+from service.conqueror.db_models import select_uploaded_jobs, select_job_by_id, JobStorageTypes
 from service.conqueror.managers import process_request
+from service.conqueror.utils import get_video_from_amazon_server
 
 
 @celery_broker.task
@@ -23,8 +19,13 @@ def get_videos_to_process():
 def process_video(job_id):
     job = select_job_by_id(job_id)
     data = {}
-    with open(job.local_path, 'rb') as video:
-        data['VideoBody'] = base64.b64encode(video.read()).decode('utf-8')
+    if job.storage_name is None:
+        return
+    elif job.storage_name == JobStorageTypes.Default.value:
+        with open(job.local_path, 'rb') as video:
+            data['VideoBody'] = base64.b64encode(video.read()).decode('utf-8')
+    elif job.storage_name == JobStorageTypes.Amazon_S3.value:
+        data['VideoBody'] = base64.b64encode(get_video_from_amazon_server(job_id)).decode('utf-8')
 
     data['SearchPhraseIdentifiers'] = ["error", "exception"]
     data['URLContains'] = ["wpadmin", "wordpress.com"]

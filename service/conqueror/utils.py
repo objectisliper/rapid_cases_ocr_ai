@@ -2,6 +2,7 @@ import asyncio
 import os
 from typing import AnyStr
 
+import requests
 from sqlalchemy import create_engine
 
 from service.conqueror.settings import database_config
@@ -29,4 +30,13 @@ def save_video_to_temporary_directory(video_file) -> AnyStr:
     with open(file_name, 'wb') as f:
         f.write(video_file.video_data)
     return file_name
+
+
+def get_video_from_amazon_server(job_id):
+    response = requests.get(f'http://mw.rapidcases.ai/download/job/{job_id}')
+    if response.status_code == 200:
+        return response.content
+    else:
+        print('Amazon S3 server response with not 200 code')
+        raise Exception('file by id not found in storage')
 
