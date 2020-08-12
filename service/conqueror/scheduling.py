@@ -19,13 +19,7 @@ def get_videos_to_process():
 def process_video(job_id):
     job = select_job_by_id(job_id)
     data = {}
-    if job.storage_name is None:
-        return
-    elif job.storage_name == JobStorageTypes.Default.value:
-        with open(job.local_path, 'rb') as video:
-            data['VideoBody'] = base64.b64encode(video.read()).decode('utf-8')
-    elif job.storage_name == JobStorageTypes.Amazon_S3.value:
-        data['VideoBody'] = base64.b64encode(get_video_from_amazon_server(job_id)).decode('utf-8')
+    data['VideoBody'] = base64.b64encode(get_video_from_amazon_server(job_id)).decode('utf-8')
 
     data['SearchPhraseIdentifiers'] = ["error", "exception"]
     data['URLContains'] = ["wpadmin", "wordpress.com"]

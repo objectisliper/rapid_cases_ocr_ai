@@ -22,7 +22,6 @@ from service.conqueror.managers import process_request
 # URLContainsResults:["wpadmin"=true, "wordpress.com"=false], //найдено было каждое слово в урле или нет
 # TextContainsResults:["MySQL"=true, "MariaDB"=false], // найдено было каждое слово в урле или нет
 # }
-from service.conqueror.scheduling import process_video
 
 
 class ProcessRequestIntegrationTest(TestCase):
@@ -31,22 +30,21 @@ class ProcessRequestIntegrationTest(TestCase):
         pass
 
     def test_process_request(self):
-        # config_path = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / '2730cfc6.webm').as_posix()
-        # request = {}
-        # with open(config_path, 'rb') as video:
-        #     request['VideoBody'] = base64.b64encode(video.read()).decode('utf-8')
-        #
-        # request['SearchPhraseIdentifiers'] = ["error", "exception"]
-        # request['URLContains'] = ["wpadmin", "force.com"]
-        # request['TextContains'] = ["Contact Form", "MariaDB"]
-        #
-        # json_encoded_request = json.dumps(request)
-        # result = process_request(json_encoded_request)
-        #
-        # self.assertIn('Contact Form System DmlException: Insert failed. First exception on row O; first erro Tag No '
-        #               'eae eh ea [LastName', result['SearchPhrasesFound'][0])
-        #
-        # self.assertTrue(result['URLContainsResults']['force.com'])
-        #
-        # self.assertTrue(result['TextContainsResults']['Contact Form'])
-        process_video('YzdQe5zCAAvAlzfw4WRp4oL6sG62kDzg')
+        config_path = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / '2730cfc6.webm').as_posix()
+        request = {}
+        with open(config_path, 'rb') as video:
+            request['VideoBody'] = base64.b64encode(video.read()).decode('utf-8')
+
+        request['SearchPhraseIdentifiers'] = ["error", "exception"]
+        request['URLContains'] = ["wpadmin", "force.com"]
+        request['TextContains'] = ["Contact Form", "MariaDB"]
+
+        json_encoded_request = json.dumps(request)
+        result = process_request(json_encoded_request)
+
+        self.assertIn('Contact Form System DmlException: Insert failed. First exception on row O; first erro Tag No '
+                      'eae eh ea [LastName', result['SearchPhrasesFound'][0])
+
+        self.assertTrue(result['URLContainsResults']['force.com'])
+
+        self.assertTrue(result['TextContainsResults']['Contact Form'])
