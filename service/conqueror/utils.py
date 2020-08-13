@@ -11,6 +11,10 @@ from service.conqueror.settings.local import VIDEO_TEMP_DIR
 DSN = "mysql+pymysql://{user}:{password}@{host}:{port}/{database}"
 
 
+class FileNotFoundException(Exception):
+    pass
+
+
 def database_connection(wrapped_function):
     def wrapper(*args, **kwargs):
         db_url = DSN.format(**database_config['mysql'])
@@ -22,6 +26,7 @@ def database_connection(wrapped_function):
             connection.execute("commit")
 
         return result
+
     return wrapper
 
 
@@ -39,5 +44,4 @@ def get_video_from_amazon_server(job_id):
     else:
         error = f'{job_id} {response.status_code} file by id not found in storage'
         print(error)
-        raise Exception(error)
-
+        raise FileNotFoundException(error)

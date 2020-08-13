@@ -4,7 +4,7 @@ import json
 from app import celery_broker
 from service.conqueror.db_models import select_uploaded_jobs, select_job_by_id, JobStorageTypes
 from service.conqueror.managers import process_request
-from service.conqueror.utils import get_video_from_amazon_server
+from service.conqueror.utils import get_video_from_amazon_server, FileNotFoundException
 
 
 @celery_broker.task
@@ -21,8 +21,8 @@ def process_video(job_id):
     data = {}
     try:
         data['VideoBody'] = base64.b64encode(get_video_from_amazon_server(job_id)).decode('utf-8')
-    except Exception as e:
-        job.video_not_found(e)
+    except FileNotFoundException as e:
+        job.video_not_found(str(e))
         raise e
 
     data['SearchPhraseIdentifiers'] = job.search_phrases
