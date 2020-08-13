@@ -56,7 +56,7 @@ class JobModel:
         self.__status = row.Status
         self.local_path = row.Local_File_Path
         if row.Recognition_Identifiers:
-            recognition_data = json.loads(row.RecognitionIdentifiers)
+            recognition_data = json.loads(row.Recognition_Identifiers)
             self.url_contains = recognition_data['caseClasificationRules']['url']
             self.text_contains = recognition_data['caseClasificationRules']['page']
             self.search_phrases = recognition_data['searchPhraseIdentifiers']
