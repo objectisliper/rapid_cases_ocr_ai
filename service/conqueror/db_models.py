@@ -111,7 +111,8 @@ def select_uploaded_jobs(connection) -> List[JobModel]:
     result = []
     for row in connection.execute(JobModel.schema.select()
                                           .where(JobModel.schema.c.Status == JobStatuses.Uploaded)
-                                          .where(JobModel.schema.c.Recognition_Started_On == None)):
+                                          .where(JobModel.schema.c.Recognition_Started_On == None)
+                                          .where(JobModel.schema.c.Storage_Status == JobStorageStatuses.Uploaded)):
         result.append(JobModel(row))
     return result
 
