@@ -59,11 +59,13 @@ class KeyFrameFinder:
 
     def __check_is_special_contains(self, whole_page_text):
         for key in self.url_contains_result.keys():
-            if len(whole_page_text) >= len(key) and fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio:
+            if not self.url_contains_result[key] and len(whole_page_text) >= len(key) and \
+                    fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio:
                 self.url_contains_result[key] = True
 
         for key in self.text_contains_result.keys():
-            if len(whole_page_text) >= len(key) and fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio:
+            if not self.text_contains_result[key] and len(whole_page_text) >= len(key) and \
+                    fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio:
                 self.text_contains_result[key] = True
 
     def __save_if_keyphrase(self, text):
