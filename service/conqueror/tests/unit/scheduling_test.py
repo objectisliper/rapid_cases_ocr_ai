@@ -14,6 +14,7 @@ class JobMock:
     Storage_Name = 'Default'
     JobId = 1
     Local_File_Path = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / '7bbfc76b.mp4').as_posix()
+    RecognitionIdentifiers = None
 
 
 class JobMockAmazon:
@@ -21,6 +22,7 @@ class JobMockAmazon:
     Storage_Name = JobStorageTypes.Amazon_S3.value
     JobId = 1
     Local_File_Path = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / '7bbfc76b.mp4').as_posix()
+    RecognitionIdentifiers = None
 
 
 def get_expected_result_json():
@@ -67,5 +69,5 @@ class SchedulingTaskTestCase(TestCase):
         process_video(job_id)
         select_job_by_id.assert_called_once_with(job_id)
         process_request.assert_called_once_with(get_expected_amazon_result_json())
-        job_processed.assert_called_once_with('some text')
+        job_processed.assert_called_once_with(json.dumps({'SearchPhrasesFound': ['some text']}))
         get_video_from_amazon_server.assert_called_once_with(job_id)

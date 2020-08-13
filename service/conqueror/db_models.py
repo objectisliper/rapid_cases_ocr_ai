@@ -1,4 +1,5 @@
 import enum
+import json
 import pathlib
 from datetime import datetime
 from typing import List
@@ -44,7 +45,8 @@ class JobModel:
         Column('Local_File_Path', Text, nullable=False),
         Column('Recognition_Text', Text, nullable=True),
         Column('Storage_Status', Enum(JobStorageStatuses), nullable=True),
-        Column('Storage_Name', String(128), nullable=True)
+        Column('Storage_Name', String(128), nullable=True),
+        Column('Recognition_Identifiers', Text, nullable=True)
 
     )
 
@@ -53,6 +55,15 @@ class JobModel:
         self.storage_name = row.Storage_Name
         self.__status = row.Status
         self.local_path = row.Local_File_Path
+        if row.RecognitionIdentifiers:
+            recognition_data = json.loads(row.RecognitionIdentifiers)
+            self.url_contains = recognition_data['caseClasificationRules']['url']
+            self.text_contains = recognition_data['caseClasificationRules']['page']
+            self.search_phrases = recognition_data['searchPhraseIdentifiers']
+        else:
+            self.url_contains = ["wpadmin", "wordpress.com"]
+            self.text_contains = ["MySQL", "MariaDB"]
+            self.search_phrases = ["error", "exception"]
 
     @staticmethod
     @database_connection

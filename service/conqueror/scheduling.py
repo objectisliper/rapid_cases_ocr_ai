@@ -21,13 +21,13 @@ def process_video(job_id):
     data = {}
     data['VideoBody'] = base64.b64encode(get_video_from_amazon_server(job_id)).decode('utf-8')
 
-    data['SearchPhraseIdentifiers'] = ["error", "exception"]
-    data['URLContains'] = ["wpadmin", "wordpress.com"]
-    data['TextContains'] = ["MySQL", "MariaDB"]
+    data['SearchPhraseIdentifiers'] = job.search_phrases
+    data['URLContains'] = job.url_contains
+    data['TextContains'] = job.text_contains
     json_encoded_request = json.dumps(data)
     result = process_request(json_encoded_request)
     print('end processing')
-    job.job_processed('\n '.join(result.get('SearchPhrasesFound')))
+    job.job_processed(json.dumps(result))
 
 
 celery_broker.add_periodic_task(schedule=120.0, sig=get_videos_to_process.s(), queue='recognizer_scheduling')
