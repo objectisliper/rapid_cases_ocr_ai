@@ -47,7 +47,8 @@ class JobModel:
         Column('Recognition_Text', Text, nullable=True),
         Column('Storage_Status', Enum(JobStorageStatuses), nullable=True),
         Column('Storage_Name', String(128), nullable=True),
-        Column('Recognition_Identifiers', Text, nullable=True)
+        Column('Recognition_Identifiers', Text, nullable=True),
+        Column('Exception_Text', Text, nullable=True)
 
     )
 
@@ -102,7 +103,7 @@ class JobModel:
         connection.execute(self.schema
                            .update()
                            .where(self.schema.c.JobId == self.id)
-                           .values(Status=JobStatuses.Exception, Recognition_Text=exception,
+                           .values(Status=JobStatuses.Exception, Exception_Text=exception,
                                    Recognition_Competed_On=datetime.utcnow()))
 
 
