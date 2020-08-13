@@ -37,6 +37,7 @@ def get_video_from_amazon_server(job_id):
     if response.status_code == 200:
         return response.content
     else:
-        print('Amazon S3 server response with not 200 code')
-        raise Exception(f'{job_id} {response.status_code} file by id not found in storage')
+        error = f'{job_id} {response.status_code} file by id not found in storage'
+        print(error)
+        raise Exception(error)
 
