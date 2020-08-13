@@ -15,6 +15,7 @@ class JobStatuses(enum.Enum):
     Created = 'Created'
     Uploaded = 'Uploaded'
     Recognized = 'Recognized'
+    Exception = 'Exception'
     Deleted = 'Deleted'
 
 
@@ -94,6 +95,14 @@ class JobModel:
                            .update()
                            .where(self.schema.c.JobId == self.id)
                            .values(Status=JobStatuses.Recognized, Recognition_Text=recognition_text,
+                                   Recognition_Competed_On=datetime.utcnow()))
+
+    @database_connection
+    def video_not_found(self, exception: str, connection):
+        connection.execute(self.schema
+                           .update()
+                           .where(self.schema.c.JobId == self.id)
+                           .values(Status=JobStatuses.Exception, Recognition_Text=exception,
                                    Recognition_Competed_On=datetime.utcnow()))
 
 

@@ -19,7 +19,10 @@ def get_videos_to_process():
 def process_video(job_id):
     job = select_job_by_id(job_id)
     data = {}
-    data['VideoBody'] = base64.b64encode(get_video_from_amazon_server(job_id)).decode('utf-8')
+    try:
+        data['VideoBody'] = base64.b64encode(get_video_from_amazon_server(job_id)).decode('utf-8')
+    except Exception as e:
+        job.video_not_found(e)
 
     data['SearchPhraseIdentifiers'] = job.search_phrases
     data['URLContains'] = job.url_contains
