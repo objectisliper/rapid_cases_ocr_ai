@@ -14,7 +14,7 @@ class JobMock:
     Storage_Name = 'Default'
     JobId = 1
     Local_File_Path = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / '7bbfc76b.mp4').as_posix()
-    RecognitionIdentifiers = None
+    Recognition_Identifiers = None
 
 
 class JobMockAmazon:
@@ -22,7 +22,7 @@ class JobMockAmazon:
     Storage_Name = JobStorageTypes.Amazon_S3.value
     JobId = 1
     Local_File_Path = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / '7bbfc76b.mp4').as_posix()
-    RecognitionIdentifiers = None
+    Recognition_Identifiers = None
 
 
 def get_expected_result_json():
