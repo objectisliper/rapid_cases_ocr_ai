@@ -6,22 +6,24 @@ of different software error occurrences
 Michael Drozdovsky, 2020
 michael@drozdovsky.com
 """
+import cv2
 import pytesseract
 from fuzzywuzzy import fuzz
+from pandas import np
 
 
 class KeyFrameFinder:
     found_lines = []
     url_contains_result = {}
     text_contains_result = {}
-    needed_ratio = 85
+    needed_ratio = 80
 
     def __init__(self, motion_threshold=0.5, skip_frames=100,
                  object_detection_threshold=0.5, search_phrases: [str] = [], url_contains: [str] = [],
                  text_contains: [str] = []):
 
         self.threshold = motion_threshold
-        self.skip_frames = 50  # skip_frames
+        self.skip_frames = 10  # skip_frames
         self.object_detection_threshold = object_detection_threshold
 
         self.search_phrases = search_phrases
@@ -35,16 +37,20 @@ class KeyFrameFinder:
         self.templates = {}
 
     def process_keyframes(self, video_handler) -> ([str], dict, dict):
-
         while True:
             result, frame = video_handler.read()
             print('keyframe step')
             if not result:
                 break
 
-            text_by_lines = self.__combine_by_line_number(pytesseract.image_to_data(frame[..., 0], output_type='dict'))
+            image = frame[..., 0]
 
-            self.__check_is_special_contains(''.join(text_by_lines))
+            # you can try --psm 11 and --psm 6
+            whole_page_text = pytesseract.image_to_data(image, output_type='dict')
+
+            text_by_lines = self.__get_page_text(whole_page_text)
+
+            self.__check_is_special_contains(' '.join(whole_page_text['text']))
 
             for line_text in text_by_lines:
                 if line_text == '':
@@ -75,20 +81,18 @@ class KeyFrameFinder:
                     fuzz.partial_ratio(phrase, text) >= self.needed_ratio:
                 self.found_lines.append(text)
 
-    def __combine_by_line_number(self, image_data: dict, lines_in_string: int = 1):
-        result_list = []
+    def __get_page_text(self, image_data: dict):
+        result_list = {}
 
-        for index, value in enumerate(image_data['line_num']):
+        for index, value in enumerate(image_data['top']):
+
             line_next_word = image_data['text'][index]
 
-            if value > 0 and lines_in_string > 1:
-                value = int(((value + 1) - (value + 1) % lines_in_string) / lines_in_string)
-                if value > 0:
-                    value -= 1
-
-            if len(result_list) >= value + 1:
-                result_list[value] = result_list[value] + ' ' + line_next_word
+            if result_list.get(str(value)):
+                result_list[str(value)] = result_list.get(str(value)) + ' ' + line_next_word
             else:
-                result_list.append(line_next_word)
+                result_list[str(value)] = line_next_word
+
+        result_list = list(set(result_list.values()))
 
         return result_list

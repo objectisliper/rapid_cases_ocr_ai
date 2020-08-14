@@ -31,6 +31,7 @@ def process_video(job_id):
     json_encoded_request = json.dumps(data)
     result = process_request(json_encoded_request)
     print('end processing')
+    print(result)
     job.job_processed(json.dumps(result))
 
 

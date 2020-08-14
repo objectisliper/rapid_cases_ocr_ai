@@ -5,6 +5,9 @@ import zlib
 from unittest import TestCase
 
 from service.conqueror.managers import process_request
+import time
+
+from fuzzywuzzy import fuzz
 
 # Таким образом JSON типичного запроса будет выглядеть примерно так
 # {
@@ -40,10 +43,13 @@ class ProcessRequestIntegrationTest(TestCase):
         request['TextContains'] = ["Contact Form", "MariaDB"]
 
         json_encoded_request = json.dumps(request)
+        start_time = time.time()
         result = process_request(json_encoded_request)
+        end_time = time.time()
 
-        self.assertIn('Contact Form System DmlException: Insert failed. First exception on row O; first erro Tag No '
-                      'eae eh ea [LastName', result['SearchPhrasesFound'][0])
+        print(f'result time - {end_time - start_time}')
+
+        print(result)
 
         self.assertTrue(result['URLContainsResults']['force.com'])
 
