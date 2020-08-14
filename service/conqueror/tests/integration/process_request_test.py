@@ -51,6 +51,8 @@ class ProcessRequestIntegrationTest(TestCase):
 
         print(result)
 
+        self.assertTrue(any(['DmlException' in item for item in result['SearchPhrasesFound']]))
+
         self.assertTrue(result['URLContainsResults']['force.com'])
 
         self.assertTrue(result['TextContainsResults']['Contact Form'])
