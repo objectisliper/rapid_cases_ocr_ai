@@ -13,15 +13,14 @@ from pandas import np
 
 
 class KeyFrameFinder:
-    found_lines = []
-    url_contains_result = {}
-    text_contains_result = {}
-    needed_ratio = 80
 
     def __init__(self, motion_threshold=0.5, skip_frames=100,
                  object_detection_threshold=0.5, search_phrases: [str] = [], url_contains: [str] = [],
                  text_contains: [str] = []):
-
+        self.found_lines = []
+        self.url_contains_result = {}
+        self.text_contains_result = {}
+        self.needed_ratio = 80
         self.threshold = motion_threshold
         self.skip_frames = 10  # skip_frames
         self.object_detection_threshold = object_detection_threshold
@@ -44,6 +43,8 @@ class KeyFrameFinder:
                 break
 
             image = frame[..., 0]
+            #
+            # image = cv2.adaptiveThreshold(image, 220, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, 2)
 
             # you can try --psm 11 and --psm 6
             whole_page_text = pytesseract.image_to_data(image, output_type='dict')
