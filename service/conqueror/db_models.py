@@ -101,7 +101,7 @@ class JobModel:
                                    Recognition_Competed_On=datetime.utcnow()))
 
     @database_connection
-    def video_not_found(self, exception: str, connection):
+    def exception_catched(self, exception: str, connection):
         connection.execute(self.schema
                            .update()
                            .where(self.schema.c.JobId == self.id)

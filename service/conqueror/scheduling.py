@@ -22,14 +22,18 @@ def process_video(job_id):
     try:
         data['VideoBody'] = base64.b64encode(get_video_from_amazon_server(job_id)).decode('utf-8')
     except FileNotFoundException as e:
-        job.video_not_found(str(e))
+        job.exception_catched(str(e))
         raise e
 
     data['SearchPhraseIdentifiers'] = job.search_phrases
     data['URLContains'] = job.url_contains
     data['TextContains'] = job.text_contains
     json_encoded_request = json.dumps(data)
-    result = process_request(json_encoded_request)
+    try:
+        result = process_request(json_encoded_request)
+    except Exception as e:
+        job.exception_catched(str(e))
+        raise e
     print('end processing')
     print(result)
     job.job_processed(json.dumps(result))
