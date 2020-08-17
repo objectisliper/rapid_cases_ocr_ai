@@ -25,6 +25,24 @@ class JobMockAmazon:
     Recognition_Identifiers = None
 
 
+class JobMockRecognitionIdentifiersWithoutUrl:
+    Status = 'Uploaded'
+    Storage_Name = JobStorageTypes.Amazon_S3.value
+    JobId = 1
+    Local_File_Path = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / '7bbfc76b.mp4').as_posix()
+    Recognition_Identifiers = '{"caseClasificationRules":{"page":["MySQL","MongoDB","Oracle","Java"],"url":null},' \
+                              '"searchPhraseIdentifiers":["Error","Exception","System"]}'
+
+
+class JobMockRecognitionIdentifiersWithUrl:
+    Status = 'Uploaded'
+    Storage_Name = JobStorageTypes.Amazon_S3.value
+    JobId = 1
+    Local_File_Path = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / '7bbfc76b.mp4').as_posix()
+    Recognition_Identifiers = '{"caseClasificationRules":{"page":["MySQL","MongoDB","Oracle","Java"],"url":["test"]},' \
+                              '"searchPhraseIdentifiers":["Error","Exception","System"]}'
+
+
 def get_expected_result_json():
     data = {}
     with open(JobMock.Local_File_Path, 'rb') as video:
@@ -71,3 +89,12 @@ class SchedulingTaskTestCase(TestCase):
         process_request.assert_called_once_with(get_expected_amazon_result_json())
         job_processed.assert_called_once_with(json.dumps({'SearchPhrasesFound': ['some text']}))
         get_video_from_amazon_server.assert_called_once_with(job_id)
+
+    def test_create_job_url_null_object(self):
+        job_without_url = JobModel(JobMockRecognitionIdentifiersWithoutUrl)
+        self.assertEqual(job_without_url.url_contains, [])
+
+    def test_create_url_non_null_object(self):
+        job_with_url = JobModel(JobMockRecognitionIdentifiersWithUrl)
+        self.assertEqual(job_with_url.url_contains, json.loads(
+            JobMockRecognitionIdentifiersWithUrl.Recognition_Identifiers)['caseClasificationRules']['url'])

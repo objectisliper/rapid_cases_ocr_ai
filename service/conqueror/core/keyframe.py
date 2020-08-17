@@ -9,7 +9,6 @@ michael@drozdovsky.com
 import cv2
 import pytesseract
 from fuzzywuzzy import fuzz
-from pandas import np
 
 
 class KeyFrameFinder:
