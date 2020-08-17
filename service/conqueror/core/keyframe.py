@@ -49,7 +49,7 @@ class KeyFrameFinder:
             # you can try --psm 11 and --psm 6
             whole_page_text = pytesseract.image_to_data(image, output_type='dict')
 
-            text_by_lines = self.__get_page_text(whole_page_text)
+            text_by_lines = self.__get_page_text_by_lines(whole_page_text)
 
             self.__check_is_special_contains(' '.join(whole_page_text['text']))
 
@@ -82,7 +82,7 @@ class KeyFrameFinder:
                     fuzz.partial_ratio(phrase, text) >= self.needed_ratio:
                 self.found_lines.append(text)
 
-    def __get_page_text(self, image_data: dict):
+    def __get_page_text_by_lines(self, image_data: dict):
         result_list = {}
 
         for index, value in enumerate(image_data['top']):
