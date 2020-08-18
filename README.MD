@@ -1,4 +1,4 @@
-##LOCAL SETUP
+## LOCAL SETUP
 - If new system
 
 ```
@@ -76,7 +76,7 @@ Default credentials to admin is login - guest , and password - guest
 celery -A service.conqueror.scheduling worker -l info
 ```
 
-##VPS SETUP
+## VPS SETUP
 
 First make sure, that on vps already installed python:
 
@@ -86,7 +86,7 @@ sudo apt-get install mysql-server &&
 sudo apt-get install libmysqlclient-dev
 ```
 
-##DEPLOY
+## DEPLOY
 
 Don't forget to setup configs in deploy_tools/deploy_local.yaml, start from copying example:
 
@@ -105,7 +105,7 @@ fab -f deploy_tools/fabfile.py deploy
 ```
 from root directory.
 
-##TESTS
+## TESTS
 
 Start all from virtual environment
 
@@ -113,12 +113,19 @@ Start all from virtual environment
 . venv/bin/activate
 ```
 
-###Integration tests
+### Integration tests
 ```
 python -m unittest discover -s service.conqueror.tests.integration -p '*_test.py'
 ```
 
-###Unit tests
+### Unit tests
 ```
 python -m unittest discover -s service.conqueror.tests.unit -p '*_test.py'
+```
+
+##Update EC2 server daemon
+```
+cd /home/ubuntu/rapid-cases-python/ && git pull origin dev_pp
+sudo su
+supervisorctl restart all && supervisorctl status all
 ```
