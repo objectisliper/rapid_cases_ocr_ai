@@ -21,7 +21,7 @@ class KeyFrameFinder:
         self.text_contains_result = {}
         self.needed_ratio = 80
         self.threshold = motion_threshold
-        self.skip_frames = 10  # skip_frames
+        self.skip_frames = 50  # skip_frames
         self.object_detection_threshold = object_detection_threshold
 
         self.search_phrases = search_phrases
