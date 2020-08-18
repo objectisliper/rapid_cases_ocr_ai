@@ -2,12 +2,21 @@
 - If new system
 
 ```
+sudo apt update &&
 sudo apt install python3-dev &&
 sudo apt install python3-venv &&
 sudo apt install tesseract-ocr &&
 sudo apt install libtesseract-dev &&
 sudo apt-get install libmysqlclient-dev &&
-sudo apt install ffmpeg
+sudo apt-get install build-essential &&
+sudo apt install ffmpeg &&
+sudo apt install supervisor &&
+sudo apt-get install -y erlang &&
+sudo apt-get install rabbitmq-server &&
+sudo systemctl enable rabbitmq-server &&
+sudo systemctl start rabbitmq-server &&
+sudo systemctl status rabbitmq-server &&
+sudo apt install nginx
 ```
 - Set up mysql
 https://www.digitalocean.com/community/tutorials/mysql-ubuntu-18-04-ru
@@ -30,7 +39,7 @@ python3 -m venv venv
 ```
 source venv/bin/activate && 
 pip install --upgrade pip && 
-pip install -r requirements.txt && 
+pip install -r requirements.txt
 ```
 
 - ATTENTION! If you have data in your sql schema, don't init it!
