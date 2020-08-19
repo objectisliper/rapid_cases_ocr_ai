@@ -1,0 +1,19 @@
+{
+   "SearchPhrasesFound":[
+      "Please fix the issues we found so we can proceed with connecting your site.",
+      "You need to fix some things to use AdSense",
+      "Please fix the issues we found so",
+      "You need to fix some things to use"
+   ],
+   "URLContainsResults":{
+      "adsense":true,
+      "google.com":true,
+	  "facebook.com":false
+   },
+   "TextContainsResults":{
+      "fix the issues":true,
+      "AdSense":true,
+	  "yandex":false,
+	  "No content":true
+   }
+}

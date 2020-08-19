@@ -1,0 +1,19 @@
+{
+   "VideoBody":"",
+   "SearchPhraseIdentifiers":[
+      "error",
+      "unexpected error"
+   ],
+   "URLContains":[
+      "twitch",
+      "google.com",
+	  "help",
+	  "purchase"
+   ],
+   "TextContains":[
+      "Complete Purchase",
+	  "AdSense",
+      "Purchase Not Complete",
+	  "Unexpected error occured"
+   ]
+}
