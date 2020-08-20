@@ -47,7 +47,7 @@ def save_video_to_temporary_directory(video_file) -> AnyStr:
 
 
 def get_video_from_amazon_server(job_id):
-    timestamp = int(time.time())
+    timestamp = int(time.time() * 1000)
     signature = get_amazon_server_signature(job_id, timestamp)
     response = requests.get(f'http://mw.rapidcases.ai/download/job/{job_id}?signature={signature}&timestamp={timestamp}')
     if response.status_code == 200:
