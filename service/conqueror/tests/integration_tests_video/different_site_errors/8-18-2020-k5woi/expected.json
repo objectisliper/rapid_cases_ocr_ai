@@ -1,0 +1,23 @@
+{
+   "SearchPhrasesFound":[
+      "Error FAQ",
+      "Bits Purchases Torubleshooting Guide & Payment",
+      "Bits Purchases Torubleshooting Guide & Payment Error FAQ",
+      "an error, and are unable to complete the purchase.",
+      "When purchasing Bits on the website using your desired payment method, there may be times where you encounter an error, and are unable to complete the purchase.",
+      "An unexpected error occured. Please try again later",
+      "An unexpected error occured"
+   ],
+   "URLContainsResults":{
+      "twitch":true,
+      "google.com":false,
+	  "help":true,
+	  "purchase":true
+   },
+   "TextContainsResults":{
+      "Complete Purchase":true,
+      "AdSense":false,
+	  "Purchase Not Complete":true,
+	  "Unexpected error occured":true
+   }
+}

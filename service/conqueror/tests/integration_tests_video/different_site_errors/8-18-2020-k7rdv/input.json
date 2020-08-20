@@ -1,0 +1,17 @@
+{
+   "VideoBody":"",
+   "SearchPhraseIdentifiers":[
+      "fix",
+      "issue"
+   ],
+   "URLContains":[
+      "adsense",
+      "google.com",
+	  "facebook.com"
+   ],
+   "TextContains":[
+      "fix the issues",
+      "AdSense",
+	  "No content"
+   ]
+}
