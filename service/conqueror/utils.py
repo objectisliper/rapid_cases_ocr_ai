@@ -53,7 +53,8 @@ def get_video_from_amazon_server(job_id):
     if response.status_code == 200:
         return response.content
     else:
-        error = f'{job_id} {response.status_code} file by id not found in storage'
+        error = f'job_id={job_id} status_code={response.status_code} timestamp={timestamp} signature={timestamp} ' \
+                f'file by id not found in storage'
         print(error)
         raise FileNotFoundException(error)
 
