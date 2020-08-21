@@ -126,9 +126,11 @@ class ReportGenerator():
     def save_report(self, config_path):
         time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M")
         report_filename = os.path.join(config_path, "report" + time_suffix + ".csv")
+        print ('Saving report to file: ' + report_filename)
         with open(report_filename, "w", newline='') as file:
             writer = csv.writer(file, delimiter='\t')
             writer.writerows(self.report)
+        print('Report was sucessfully saved!')
 
 
 if __name__ == "__main__":
