@@ -128,7 +128,7 @@ class ReportGenerator():
         report_filename = os.path.join(config_path, "report" + time_suffix + ".csv")
         print ('Saving report to file: ' + report_filename)
         with open(report_filename, "w", newline='') as file:
-            writer = csv.writer(file, delimiter='\t')
+            writer = csv.writer(file, delimiter=';')
             writer.writerows(self.report)
         print('Report was sucessfully saved!')
 
