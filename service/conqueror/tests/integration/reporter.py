@@ -124,7 +124,7 @@ class ReportGenerator():
         print(f'Total time in seconds: {total_duration}')
 
     def save_report(self, config_path):
-        time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M")
+        time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         report_filename = os.path.join(config_path, "report" + time_suffix + ".csv")
         print ('Saving report to file: ' + report_filename)
         with open(report_filename, "w", newline='') as file:
