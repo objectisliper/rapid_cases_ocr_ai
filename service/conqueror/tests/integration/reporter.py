@@ -42,6 +42,9 @@ class ReportGenerator():
 
         result = sum / len(expected_dict)
 
+        # convert to percents
+        result = result * 100
+
         return result
 
     def __calc_test_score(self, expected_response, real_response):
@@ -59,6 +62,8 @@ class ReportGenerator():
                 if key in real_response["SearchPhrasesFound"]:
                     sum += 1
             score["SearchPhrasesFound"] = sum / len(expected_response["SearchPhrasesFound"])
+            # convert to percents
+            score["SearchPhrasesFound"] = score["SearchPhrasesFound"] * 100
 
         score["URLContainsResults"] = self.__calc_TrueFalse_score(expected_response["URLContainsResults"],
                                                                   real_response["URLContainsResults"])
