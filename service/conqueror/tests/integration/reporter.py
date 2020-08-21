@@ -6,6 +6,8 @@ import os
 import pathlib
 import time
 
+from numpy import mean
+
 from service.conqueror.managers import process_request
 
 # from fuzzywuzzy import fuzz
@@ -110,18 +112,46 @@ class ReportGenerator():
         test_folders = os.listdir(config_path)
         self.__clean_report()
         total_duration = 0.0
+        problem_folders = []
 
         for test_folder in test_folders:
             test_folder_path = os.path.join(config_path, test_folder)
             if os.path.isfile(test_folder_path):
                 continue
-            test_result, duration, score = self.__process_videotest(test_folder_path)
-            total_duration += duration
-            row = [test_folder, score["SearchPhrasesFound"], score["URLContainsResults"], score["TextContainsResults"], score["Total"], duration, test_result]
-            self.report.append(row)
-            print(row)
 
-        print(f'Total time in seconds: {total_duration}')
+            print("processing folder: " + test_folder)
+            try:
+                test_result, duration, score = self.__process_videotest(test_folder_path)
+                total_duration += duration
+                row = [test_folder, score["SearchPhrasesFound"], score["URLContainsResults"], score["TextContainsResults"], score["Total"], duration, test_result]
+                self.report.append(row)
+                print(row)
+            except Exception as e:
+                problem_folders.append(test_folder)
+                print('Some problem with processing folder "' + test_folder + '"')
+                print('Exception: {0}'.format(e))
+
+        avg_phrases_found = mean([row[1] for row in self.report[1:]])
+        avg_URL_contains = mean([row[2] for row in self.report[1:]])
+        avg_Text_contains = mean([row[3] for row in self.report[1:]])
+        avg_total_score = mean([row[4] for row in self.report[1:]])
+        avg_time = mean([row[5] for row in self.report[1:]])
+
+        self.report.append([])
+        #self.report.append(['-------------------------','------------------','------------------','------------------','------------------','------------------','------------------'])
+        self.report.append(['Average', avg_phrases_found, avg_URL_contains, avg_Text_contains, avg_total_score, avg_time])
+        self.report.append([])
+        self.report.append(['Total score', avg_total_score])
+        self.report.append(['Total time', str(datetime.timedelta(seconds=total_duration))])
+
+        if len(problem_folders) > 0:
+            print('\nProblem folders: ')
+            for folder in problem_folders:
+                print(folder)
+
+        print('--------------------------------------------------')
+        print('Total score: ' + str(avg_total_score))
+        print('Total time: ' + str(datetime.timedelta(seconds=total_duration)))
 
     def save_report(self, config_path):
         time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
