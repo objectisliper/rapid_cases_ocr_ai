@@ -21,7 +21,7 @@ class KeyFrameFinder:
         self.text_contains_result = {}
         self.needed_ratio = 80
         self.threshold = motion_threshold
-        self.skip_frames = 10  # skip_frames
+        self.skip_frames = 30  # skip_frames
         self.object_detection_threshold = object_detection_threshold
 
         self.search_phrases = search_phrases
@@ -58,6 +58,10 @@ class KeyFrameFinder:
 
                 self.__save_if_keyphrase(line_text)
 
+            # stop on first keyframe found
+            # if len(self.found_lines) > 0:
+            #     break
+
             for i in range(self.skip_frames):
                 video_handler.read()
 
@@ -66,19 +70,22 @@ class KeyFrameFinder:
     def __check_is_special_contains(self, whole_page_text):
         for key in self.url_contains_result.keys():
             if not self.url_contains_result[key] and len(whole_page_text) >= len(key) and \
-                    fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio:
+                    key in whole_page_text:
+                    # fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio:
                 self.url_contains_result[key] = True
 
         for key in self.text_contains_result.keys():
             if not self.text_contains_result[key] and len(whole_page_text) >= len(key) and \
-                    fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio:
+                    key in whole_page_text:
+                    # fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio:
                 self.text_contains_result[key] = True
 
     def __save_if_keyphrase(self, text):
 
         for phrase in self.search_phrases:
             if len(text) >= len(phrase) and text not in self.found_lines and \
-                    fuzz.partial_ratio(phrase, text) >= self.needed_ratio:
+                    phrase in text:
+                    # fuzz.partial_ratio(phrase, text) >= self.needed_ratio:
                 self.found_lines.append(text)
 
     def __get_page_text_by_lines(self, image_data: dict):
