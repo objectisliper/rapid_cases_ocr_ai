@@ -80,8 +80,8 @@ class KeyFrameFinder:
             # Morph open to remove noise and invert image
             # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
             # opening = cv2.morphologyEx(gray, cv2.MORPH_OPEN, kernel, iterations=1)
-            image = 255 - gray
-            # image = gray
+            # image = 255 - gray
+            image = gray
 
             # you can try --psm 11 and --psm 6
             whole_page_text = pytesseract.image_to_data(image, output_type='dict')
@@ -91,14 +91,14 @@ class KeyFrameFinder:
 
             # text_by_lines = self.__get_page_text_by_lines(whole_page_text)
 
-            self.__check_is_special_contains(' '.join(whole_page_text['text']))
+            # self.__check_is_special_contains(' '.join(whole_page_text['text']))
 
             # for line_text in blocks:
             # for line_text in text_by_lines:
             for line_text in blocks:
                 if line_text == '':
                     continue
-                # self.__check_is_special_contains(line_text)
+                self.__check_is_special_contains(line_text)
                 self.__save_if_keyphrase(line_text)
 
             # stop on first keyframe found
@@ -112,21 +112,19 @@ class KeyFrameFinder:
 
     def __check_is_special_contains(self, whole_page_text):
         for key in self.url_contains_result.keys():
-            if not self.url_contains_result[key] and len(whole_page_text) >= len(key) and \
-                    key in whole_page_text:
-                    # fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio:
+            if not self.url_contains_result[key] and len(whole_page_text) + 5 >= len(key) and \
+                    (key in whole_page_text or fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio):
                 self.url_contains_result[key] = True
 
         for key in self.text_contains_result.keys():
-            if not self.text_contains_result[key] and len(whole_page_text) >= len(key) and \
-                    key in whole_page_text:
-                    # fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio:
+            if not self.text_contains_result[key] and len(whole_page_text) + 5 >= len(key) and \
+                    (key in whole_page_text or fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio):
                 self.text_contains_result[key] = True
 
     def __save_if_keyphrase(self, text):
 
         for phrase in self.search_phrases:
-            if len(text) >= len(phrase) and text not in self.found_lines and \
+            if len(text) + 5 >= len(phrase) and text not in self.found_lines and \
                     fuzz.partial_ratio(phrase, text) >= self.needed_ratio:
                     # phrase.lower() in text.lower():
                 self.found_lines.append(text)
