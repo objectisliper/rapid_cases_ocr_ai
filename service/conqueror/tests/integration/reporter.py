@@ -10,7 +10,7 @@ from numpy import mean
 
 from service.conqueror.managers import process_request
 
-# from fuzzywuzzy import fuzz
+from fuzzywuzzy import fuzz
 
 # Таким образом JSON типичного запроса будет выглядеть примерно так
 # {
@@ -64,7 +64,7 @@ class ReportGenerator():
                 # if expected_phrase in real_response["SearchPhrasesFound"]:
                 #     sum += 1
                 for real_phrase in real_response["SearchPhrasesFound"]:
-                    if expected_phrase in real_phrase:
+                    if expected_phrase in real_phrase or fuzz.partial_ratio(real_phrase, expected_phrase) > 80:
                         sum += 1
                         break
             score["SearchPhrasesFound"] = sum / len(expected_response["SearchPhrasesFound"])
