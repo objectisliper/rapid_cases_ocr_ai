@@ -3,9 +3,11 @@ Conqueror v.1
 System that extracts error messages from screen recordings
 of different software error occurrences
 
-Michael Drozdovsky, 2020
-michael@drozdovsky.com
+Vyacheslav Morozov, 2020
+vyacheslav@behealthy.ai
 """
+import csv
+
 import cv2
 import pytesseract
 from fuzzywuzzy import fuzz
@@ -33,6 +35,33 @@ class KeyFrameFinder:
             self.text_contains_result[key] = False
 
         self.templates = {}
+
+    def __save_recognition_csv(self, recognition_data):
+        import datetime, os
+        time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_filename = os.path.join("recognize_dict" + time_suffix + ".csv")
+        try:
+            with open(report_filename, 'w', encoding='utf-8', newline='') as csvfile:
+                # writer = csv.DictWriter(csvfile, fieldnames=list(recognition_data.keys()))
+                writer = csv.writer(csvfile)
+                # writer.writeheader()
+                writer.writerow(list(recognition_data.keys()))
+                for index, text in enumerate(recognition_data['text']):
+                    row = [recognition_data['level'][index],
+                                     recognition_data['page_num'][index],
+                                     recognition_data['block_num'][index],
+                                     recognition_data['par_num'][index],
+                                     recognition_data['line_num'][index],
+                                     recognition_data['word_num'][index],
+                                     recognition_data['left'][index],
+                                     recognition_data['top'][index],
+                                     recognition_data['width'][index],
+                                     recognition_data['height'][index],
+                                     recognition_data['conf'][index],
+                                     text]
+                    writer.writerow(row)
+        except IOError:
+            print("I/O error")
 
     def process_keyframes(self, video_handler) -> ([str], dict, dict):
         while True:
