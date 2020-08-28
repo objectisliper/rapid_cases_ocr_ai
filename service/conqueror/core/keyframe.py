@@ -132,3 +132,17 @@ class KeyFrameFinder:
         result_list = list(set(result_list.values()))
 
         return result_list
+
+    def __get_blocks(self, recognition_data: dict):
+        blocks = {}
+        min_confidence = 0
+
+        for word_index, block_index in enumerate(recognition_data['block_num']):
+            if int(recognition_data['conf'][word_index]) > min_confidence:
+                if block_index in blocks:
+                    blocks[block_index] = blocks[block_index] + ' ' + recognition_data['text'][word_index]
+                else:
+                    blocks[block_index] = recognition_data['text'][word_index]
+
+        result_blocks = [block for block in blocks.values() if len(block.strip()) > 0]
+        return result_blocks
