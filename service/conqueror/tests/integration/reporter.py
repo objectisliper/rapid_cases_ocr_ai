@@ -60,9 +60,13 @@ class ReportGenerator():
         # calculate SearchPhrasesFound score
         sum = 0.0
         if len(expected_response["SearchPhrasesFound"]) > 0:
-            for key in expected_response["SearchPhrasesFound"]:
-                if key in real_response["SearchPhrasesFound"]:
-                    sum += 1
+            for expected_phrase in expected_response["SearchPhrasesFound"]:
+                # if expected_phrase in real_response["SearchPhrasesFound"]:
+                #     sum += 1
+                for real_phrase in real_response["SearchPhrasesFound"]:
+                    if expected_phrase in real_phrase:
+                        sum += 1
+                        break
             score["SearchPhrasesFound"] = sum / len(expected_response["SearchPhrasesFound"])
             # convert to percents
             score["SearchPhrasesFound"] = score["SearchPhrasesFound"] * 100
@@ -151,13 +155,14 @@ class ReportGenerator():
 
         print('--------------------------------------------------')
         print('Total score: ' + str(avg_total_score))
+        print('Average time: ' + str(avg_time))
         print('Total time: ' + str(datetime.timedelta(seconds=total_duration)))
 
     def save_report(self, config_path):
         time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         report_filename = os.path.join(config_path, "report" + time_suffix + ".csv")
         print ('Saving report to file: ' + report_filename)
-        with open(report_filename, "w", newline='') as file:
+        with open(report_filename, "w", newline='', encoding='utf-8') as file:
             writer = csv.writer(file, delimiter=';')
             writer.writerows(self.report)
         print('Report was sucessfully saved!')
