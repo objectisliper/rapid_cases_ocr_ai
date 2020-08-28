@@ -70,9 +70,18 @@ class KeyFrameFinder:
             if not result:
                 break
 
-            image = frame[..., 0]
+            # image = frame[..., 0]
             #
             # image = cv2.adaptiveThreshold(image, 220, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, 2)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            # blur = cv2.GaussianBlur(gray, (3, 3), 0)
+            # thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+
+            # Morph open to remove noise and invert image
+            # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+            # opening = cv2.morphologyEx(gray, cv2.MORPH_OPEN, kernel, iterations=1)
+            image = 255 - gray
+            # image = gray
 
             # you can try --psm 11 and --psm 6
             whole_page_text = pytesseract.image_to_data(image, output_type='dict')
