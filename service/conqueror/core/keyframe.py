@@ -76,15 +76,20 @@ class KeyFrameFinder:
 
             # you can try --psm 11 and --psm 6
             whole_page_text = pytesseract.image_to_data(image, output_type='dict')
+            # whole_page_text2 = pytesseract.image_to_data(image, config='--psm 6', output_type='dict')
+            # self.__save_recognition_csv(whole_page_text)
+            blocks = self.__get_blocks(whole_page_text)
 
-            text_by_lines = self.__get_page_text_by_lines(whole_page_text)
+            # text_by_lines = self.__get_page_text_by_lines(whole_page_text)
 
             self.__check_is_special_contains(' '.join(whole_page_text['text']))
 
-            for line_text in text_by_lines:
+            # for line_text in blocks:
+            # for line_text in text_by_lines:
+            for line_text in blocks:
                 if line_text == '':
                     continue
-
+                # self.__check_is_special_contains(line_text)
                 self.__save_if_keyphrase(line_text)
 
             # stop on first keyframe found
@@ -113,8 +118,8 @@ class KeyFrameFinder:
 
         for phrase in self.search_phrases:
             if len(text) >= len(phrase) and text not in self.found_lines and \
-                    phrase in text:
-                    # fuzz.partial_ratio(phrase, text) >= self.needed_ratio:
+                    fuzz.partial_ratio(phrase, text) >= self.needed_ratio:
+                    # phrase.lower() in text.lower():
                 self.found_lines.append(text)
 
     def __get_page_text_by_lines(self, image_data: dict):
