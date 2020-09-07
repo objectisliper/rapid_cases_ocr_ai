@@ -42,10 +42,8 @@ class KeyFrameFinder:
         time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         report_filename = os.path.join("recognize_dict" + time_suffix + ".csv")
         try:
-            with open(report_filename, 'w', encoding='utf-8', newline='') as csvfile:
-                # writer = csv.DictWriter(csvfile, fieldnames=list(recognition_data.keys()))
-                writer = csv.writer(csvfile)
-                # writer.writeheader()
+            with open(report_filename, 'w', encoding='utf-8', newline='') as csv_file:
+                writer = csv.writer(csv_file)
                 writer.writerow(list(recognition_data.keys()))
                 for index, text in enumerate(recognition_data['text']):
                     row = [recognition_data['level'][index],
