@@ -24,6 +24,7 @@ class KeyFrameFinder:
         self.needed_ratio = 80
         self.threshold = motion_threshold
         self.skip_frames = 30  # skip_frames
+        self.max_y_position_for_URL = 100
         self.object_detection_threshold = object_detection_threshold
 
         self.search_phrases = search_phrases
@@ -87,7 +88,7 @@ class KeyFrameFinder:
             whole_page_text = pytesseract.image_to_data(image, output_type='dict')
             # whole_page_text2 = pytesseract.image_to_data(image, config='--psm 6', output_type='dict')
             # self.__save_recognition_csv(whole_page_text)
-            blocks = self.__get_blocks(whole_page_text)
+            url_blocks, page_blocks = self.__get_blocks(whole_page_text)
 
             # text_by_lines = self.__get_page_text_by_lines(whole_page_text)
 
@@ -95,11 +96,19 @@ class KeyFrameFinder:
 
             # for line_text in blocks:
             # for line_text in text_by_lines:
-            for line_text in blocks:
+            for line_text in page_blocks:
                 if line_text == '':
                     continue
-                self.__check_is_special_contains(line_text)
+
+                self.__check_text_contains(whole_page_text)
+                # self.__check_url_contains(whole_page_text)
                 self.__save_if_keyphrase(line_text)
+
+            for line_text in url_blocks:
+                if line_text == '':
+                    continue
+
+                self.__check_url_contains(whole_page_text)
 
             # stop on first keyframe found
             # if len(self.found_lines) > 0:
@@ -110,16 +119,17 @@ class KeyFrameFinder:
 
         return self.found_lines, self.url_contains_result, self.text_contains_result
 
-    def __check_is_special_contains(self, whole_page_text):
-        for key in self.url_contains_result.keys():
-            if not self.url_contains_result[key] and len(whole_page_text) + 5 >= len(key) and \
-                    (key in whole_page_text or fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio):
-                self.url_contains_result[key] = True
-
+    def __check_text_contains(self, whole_page_text):
         for key in self.text_contains_result.keys():
             if not self.text_contains_result[key] and len(whole_page_text) + 5 >= len(key) and \
                     (key in whole_page_text or fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio):
                 self.text_contains_result[key] = True
+
+    def __check_url_contains(self, whole_page_text):
+        for key in self.url_contains_result.keys():
+            if not self.url_contains_result[key] and len(whole_page_text) + 5 >= len(key) and \
+                    (key in whole_page_text or fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio):
+                self.url_contains_result[key] = True
 
     def __save_if_keyphrase(self, text):
 
@@ -146,15 +156,24 @@ class KeyFrameFinder:
         return result_list
 
     def __get_blocks(self, recognition_data: dict):
-        blocks = {}
+        url_blocks = {}
+        page_blocks = {}
         min_confidence = 0
 
         for word_index, block_index in enumerate(recognition_data['block_num']):
             if int(recognition_data['conf'][word_index]) > min_confidence:
-                if block_index in blocks:
-                    blocks[block_index] = blocks[block_index] + ' ' + recognition_data['text'][word_index]
+                if recognition_data['top'][word_index] > self.max_y_position_for_URL:
+                # if recognition_data['top'][word_index] > -100:
+                    if block_index in page_blocks:
+                        page_blocks[block_index] = page_blocks[block_index] + ' ' + recognition_data['text'][word_index]
+                    else:
+                        page_blocks[block_index] = recognition_data['text'][word_index]
                 else:
-                    blocks[block_index] = recognition_data['text'][word_index]
+                    if block_index in url_blocks:
+                        url_blocks[block_index] = url_blocks[block_index] + ' ' + recognition_data['text'][word_index]
+                    else:
+                        url_blocks[block_index] = recognition_data['text'][word_index]
 
-        result_blocks = [block for block in blocks.values() if len(block.strip()) > 0]
-        return result_blocks
+        result_url_blocks = [block for block in url_blocks.values() if len(block.strip()) > 0]
+        result_page_blocks = [block for block in page_blocks.values() if len(block.strip()) > 0]
+        return result_url_blocks, result_page_blocks
