@@ -63,6 +63,7 @@ class JobModel:
             self.text_contains = self.recognition_identifiers['caseClasificationRules']['page'] or []
             self.search_phrases = self.recognition_identifiers['searchPhraseIdentifiers'] or []
         else:
+            self.recognition_identifiers = {}
             self.url_contains = ["wpadmin", "wordpress.com"]
             self.text_contains = ["MySQL", "MariaDB"]
             self.search_phrases = ["error", "exception"]
