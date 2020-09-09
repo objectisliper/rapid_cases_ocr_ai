@@ -48,4 +48,5 @@ celery==4.4.6
 fabric3==1.14.post1
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.12.0
+simplejson==3.17.2
 

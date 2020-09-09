@@ -48,8 +48,7 @@ class VideoFile(object):
 
     def save(self):
         video_b64 = base64.b64encode(self.video_data).decode('utf-8')
-        signature = self.signature if self.signature else \
-        VideoFile._sign(video_b64)
+        signature = self.signature if self.signature else VideoFile._sign(video_b64)
 
         return {
             'video': video_b64,

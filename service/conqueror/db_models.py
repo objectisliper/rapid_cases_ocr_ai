@@ -58,10 +58,10 @@ class JobModel:
         self.__status = row.Status
         self.local_path = row.Local_File_Path
         if row.Recognition_Identifiers:
-            recognition_data = json.loads(row.Recognition_Identifiers)
-            self.url_contains = recognition_data['caseClasificationRules']['url'] or []
-            self.text_contains = recognition_data['caseClasificationRules']['page'] or []
-            self.search_phrases = recognition_data['searchPhraseIdentifiers'] or []
+            self.recognition_identifiers = json.loads(row.Recognition_Identifiers)
+            self.url_contains = self.recognition_identifiers['caseClasificationRules']['url'] or []
+            self.text_contains = self.recognition_identifiers['caseClasificationRules']['page'] or []
+            self.search_phrases = self.recognition_identifiers['searchPhraseIdentifiers'] or []
         else:
             self.url_contains = ["wpadmin", "wordpress.com"]
             self.text_contains = ["MySQL", "MariaDB"]
