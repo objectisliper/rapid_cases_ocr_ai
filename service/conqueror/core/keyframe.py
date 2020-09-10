@@ -21,6 +21,14 @@ class KeyFrameFinder:
         self.found_lines = []
         self.url_contains_result = {}
         self.text_contains_result = {}
+
+        # image preprocessing
+        self.use_gray_colors = True
+        self.invert_colors = False
+        self.use_morphology = False
+        self.use_threshold_with_gausian_blur = False
+        self.use_adaptiveThreshold = False
+
         self.needed_ratio = 80
         self.threshold = motion_threshold
         self.skip_frames = 30  # skip_frames
@@ -64,23 +72,18 @@ class KeyFrameFinder:
 
     def process_keyframes(self, video_handler) -> ([str], dict, dict):
         while True:
+            # todo: research how we can use CV_CAP_PROP_POS_MSEC or CV_CAP_PROP_POS_FRAMES
+            # captured_video.set()
+            #CV_CAP_PROP_FPS
+            # zzzz = video_handler.get(cv2.CAP_PROP_FRAME_COUNT)
+            # zzzz = video_handler.get(cv2.cv2.CAP_PROP_FPS)
+
             result, frame = video_handler.read()
             print('keyframe step')
             if not result:
                 break
 
-            # image = frame[..., 0]
-            #
-            # image = cv2.adaptiveThreshold(image, 220, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, 2)
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            # blur = cv2.GaussianBlur(gray, (3, 3), 0)
-            # thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
-
-            # Morph open to remove noise and invert image
-            # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            # opening = cv2.morphologyEx(gray, cv2.MORPH_OPEN, kernel, iterations=1)
-            # image = 255 - gray
-            image = gray
+            image = self.image_preprocessing(frame)
 
             # you can try --psm 11 and --psm 6
             whole_page_text = pytesseract.image_to_data(image, output_type='dict')
@@ -117,6 +120,29 @@ class KeyFrameFinder:
                 video_handler.read()
 
         return self.found_lines, self.url_contains_result, self.text_contains_result
+
+    def image_preprocessing(self, frame):
+        image = frame[..., 0]
+
+        if self.use_adaptiveThreshold:
+            image = cv2.adaptiveThreshold(image, 220, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, 2)
+
+        if self.use_gray_colors:
+            image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        if self.use_threshold_with_gausian_blur:
+            blur = cv2.GaussianBlur(image, (3, 3), 0)
+            image = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+
+        if self.use_morphology:
+            # Morph open to remove noise
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+            image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel, iterations=1)
+
+        if self.invert_colors:
+            image = 255 - image
+
+        return image
 
     def __check_text_contains(self, whole_page_text):
         for key in self.text_contains_result.keys():
