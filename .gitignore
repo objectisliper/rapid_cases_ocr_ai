@@ -8,3 +8,5 @@
 /beat.log
 /deploy_tools/deploy_local.yaml
 /sockets/
+/service/conqueror/cli/cli_local.py
+/service/conqueror/jobs_from_live_base/

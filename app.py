@@ -23,8 +23,6 @@ celery_broker.conf.timezone = 'UTC'
 
 celery_broker.conf.task_routes = {'service.conqueror.scheduling.process_video': {'queue': 'recognizer_process_video'}}
 
-DSN = "mysql://{user}:{password}@{host}:{port}/{database}"
-
 parser = argparse.ArgumentParser(description="aiohttp server example")
 parser.add_argument('--path')
 parser.add_argument('--port')
