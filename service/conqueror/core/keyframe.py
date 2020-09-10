@@ -98,7 +98,8 @@ class KeyFrameFinder:
                 if line_text == '':
                     continue
 
-                self.__check_text_contains(whole_page_text)
+                # self.__check_text_contains(whole_page_text)
+                self.__check_text_contains(line_text)
                 # self.__check_url_contains(whole_page_text)
                 self.__save_if_keyphrase(line_text)
 
@@ -106,12 +107,12 @@ class KeyFrameFinder:
                 if line_text == '':
                     continue
 
-                self.__check_url_contains(whole_page_text)
+                # self.__check_url_contains(whole_page_text)
+                self.__check_url_contains(line_text)
 
             # stop on first keyframe found
             # if len(self.found_lines) > 0:
             #     break
-
             for i in range(self.skip_frames):
                 video_handler.read()
 
@@ -130,7 +131,6 @@ class KeyFrameFinder:
                 self.url_contains_result[key] = True
 
     def __save_if_keyphrase(self, text):
-
         for phrase in self.search_phrases:
             if len(text) + 5 >= len(phrase) and text not in self.found_lines and \
                     fuzz.partial_ratio(phrase, text) >= self.needed_ratio:
