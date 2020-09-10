@@ -17,7 +17,7 @@ class KeyFrameFinder:
 
     def __init__(self, motion_threshold=0.5, skip_frames=100,
                  object_detection_threshold=0.5, search_phrases: [str] = [], url_contains: [str] = [],
-                 text_contains: [str] = []):
+                 text_contains: [str] = [], recognition_settings={}):
         self.found_lines = []
         self.url_contains_result = {}
         self.text_contains_result = {}
@@ -44,6 +44,22 @@ class KeyFrameFinder:
             self.text_contains_result[key] = False
 
         self.templates = {}
+
+        self.__load_recognition_settings(recognition_settings)
+
+    def __load_recognition_settings(self, recognition_settings):
+        settings = recognition_settings.keys()
+        if "skip_frames" in settings: self.skip_frames = recognition_settings["skip_frames"]
+
+        if "use_gray_colors" in settings: self.use_gray_colors = recognition_settings["use_gray_colors"]
+
+        if "invert_colors" in settings: self.invert_colors = recognition_settings["invert_colors"]
+
+        if "use_morphology" in settings: self.use_morphology = recognition_settings["use_morphology"]
+
+        if "use_threshold_with_gausian_blur" in settings: self.use_threshold_with_gausian_blur = recognition_settings["use_threshold_with_gausian_blur"]
+
+        if "use_adaptiveThreshold" in settings: self.use_adaptiveThreshold = recognition_settings["use_adaptiveThreshold"]
 
     def __save_recognition_csv(self, recognition_data):
         import datetime, os
