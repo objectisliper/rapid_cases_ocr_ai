@@ -87,7 +87,7 @@ class ReportGenerator():
 
         return score
 
-    def __process_videotest(self, test_folder_path):
+    def __process_videotest(self, test_folder_path, recognition_settings={}):
         input_json = os.path.join(test_folder_path, 'input.json')
         expected_json = os.path.join(test_folder_path, 'expected.json')
         with open(input_json) as json_file:
@@ -108,7 +108,7 @@ class ReportGenerator():
 
         json_encoded_request = json.dumps(request)
         start_time = time.time()
-        response = process_request(json_encoded_request)
+        response = process_request(json_encoded_request, recognition_settings)
         end_time = time.time()
 
         test_duration = end_time - start_time
@@ -116,7 +116,7 @@ class ReportGenerator():
 
         return response, test_duration, score
 
-    def test_process_request___folder(self, config_path):
+    def test_process_request___folder(self, config_path, recognition_settings={}):
         test_folders = os.listdir(config_path)
         self.__clean_report()
         total_duration = 0.0
@@ -129,7 +129,7 @@ class ReportGenerator():
 
             print("processing folder: " + test_folder)
             try:
-                test_result, duration, score = self.__process_videotest(test_folder_path)
+                test_result, duration, score = self.__process_videotest(test_folder_path, recognition_settings)
                 total_duration += duration
                 row = [test_folder, score["SearchPhrasesFound"], score["URLContainsResults"], score["TextContainsResults"], score["Total"], duration, test_result]
                 self.report.append(row)
