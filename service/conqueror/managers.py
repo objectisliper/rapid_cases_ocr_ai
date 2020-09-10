@@ -40,11 +40,11 @@ default_rule = """
     """
 
 
-def process_request(data):
-    return process_video(data)
+def process_request(data, recognition_settings={}):
+    return process_video(data, recognition_settings)
 
 
-def process_video(request_data: str):
+def process_video(request_data: str, recognition_settings={}):
     data = json.loads(request_data)
 
     video_file = VideoFile(request_data)
@@ -53,7 +53,7 @@ def process_video(request_data: str):
     captured_video = cv2.VideoCapture(video_file.stored_file)
     keyframe_finder = KeyFrameFinder(0.3, 10, object_detection_threshold=0.4,
                                      search_phrases=data['SearchPhraseIdentifiers'], url_contains=data['URLContains'],
-                                     text_contains=data['TextContains'])
+                                     text_contains=data['TextContains'], recognition_settings=recognition_settings)
 
     found_lines, url_contains_results, text_contains_result = keyframe_finder.process_keyframes(captured_video)
 
