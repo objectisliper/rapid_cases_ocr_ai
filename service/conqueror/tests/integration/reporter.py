@@ -64,7 +64,11 @@ class ReportGenerator():
                 # if expected_phrase in real_response["SearchPhrasesFound"]:
                 #     sum += 1
                 for real_phrase in real_response["SearchPhrasesFound"]:
-                    if expected_phrase in real_phrase or fuzz.partial_ratio(real_phrase, expected_phrase) > 80:
+                    if expected_phrase in real_phrase or \
+                            (
+                                len(expected_phrase) <= int(round(len(real_phrase)*1.33, 0))
+                                and fuzz.partial_ratio(real_phrase, expected_phrase) > 80
+                            ):
                         sum += 1
                         break
             score["SearchPhrasesFound"] = sum / len(expected_response["SearchPhrasesFound"])
