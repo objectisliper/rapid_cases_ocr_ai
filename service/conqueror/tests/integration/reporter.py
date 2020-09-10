@@ -162,9 +162,17 @@ class ReportGenerator():
         print('Average time: ' + str(avg_time))
         print('Total time: ' + str(datetime.timedelta(seconds=total_duration)))
 
-    def save_report(self, config_path):
+        return avg_total_score, avg_time
+
+    def save_report(self, config_path, filename_suffix=""):
         time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_filename = os.path.join(config_path, "report" + time_suffix + ".csv")
+        additional_suffix = "_" + filename_suffix if len(filename_suffix) > 0 else ""
+
+        report_filename = os.path.join(config_path, "report" + time_suffix + additional_suffix + ".csv")
+        if len(report_filename) > 250:
+            filename_without_suffix = os.path.join(config_path, "report" + time_suffix + ".csv")
+            report_filename = os.path.join(config_path, "report" + time_suffix + additional_suffix[0:(250-len(filename_without_suffix))] + ".csv")
+
         print ('Saving report to file: ' + report_filename)
         with open(report_filename, "w", newline='', encoding='utf-8') as file:
             writer = csv.writer(file, delimiter=';')
@@ -172,8 +180,82 @@ class ReportGenerator():
         print('Report was sucessfully saved!')
 
 
+
+
+
+
+def get_report_suffix(recognition_settings):
+    suffix = ""
+    if len(recognition_settings.keys()) > 0:
+        for key in recognition_settings.keys():
+            suffix += "___" + str(key) + "." + str(recognition_settings[key])
+
+    return suffix.lstrip('_')
+
 if __name__ == "__main__":
     test_root_folder = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'different_site_errors').as_posix()
+    # test_root_folder = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'live').as_posix()
+    test_settings = {}
+    # test_settings["skip_frames"] = [10, 15, 20, 25, 30 , 35, 40, 45, 50, 60, 70, 80, 90, 100, 125, 150, 200, 300]
+    # test_settings["skip_frames"] = [20, 30, 50]
+    # test_settings["use_gray_colors"] = [False, True]
+    # test_settings["invert_colors"] = [False, True]
+    # test_settings["use_morphology"] = [False, True]
+    # test_settings["use_threshold_with_gausian_blur"] = [False, True]
+    # test_settings["use_adaptiveThreshold"] = [False, True]
+    # test_settings["max_y_position_for_URL"] = [80, 90, 100, 110, 120]
+    # test_settings["word_min_confidence"] = [-1, 0, 50, 80, 90, 95]
+    # test_settings["similar_word_rate"] = [50, 80, 90, 95, 100]
+    # test_confugurations = [{setting:value} for setting in test_settings.keys()
+    #                                         for value in test_settings[setting]]
+    fullgrid = True
+
+    test_confugurations = []
+    if fullgrid:
+        import itertools
+        allNames = sorted(test_settings)
+        list_of_test_configurations = list(itertools.product(*(test_settings[Name] for Name in allNames)))
+        for configuration_values in list_of_test_configurations:
+            configuration = {}
+            for index, key in enumerate(allNames):
+                configuration[key] = configuration_values[index]
+
+            test_confugurations.append(configuration)
+    else:
+        test_confugurations = [{setting: value}
+                               for setting in test_settings.keys()
+                               for value in test_settings[setting]]
+
     rp = ReportGenerator()
-    rp.test_process_request___folder(test_root_folder)
-    rp.save_report(test_root_folder)
+    best_score = 0
+    best_time = 99999999999999
+    optimum_score = 0
+    optimum_total_score = 0
+    optimum_time = 9999999999999
+    best_score_parameters = ""
+    best_time_parameters = ""
+    optimum_parameters = ""
+
+    for configuration in test_confugurations:
+        report_suffix = get_report_suffix(configuration)
+        total_score, avg_time = rp.test_process_request___folder(test_root_folder, configuration)
+        if total_score > best_score:
+            best_score = total_score
+            best_score_parameters = report_suffix
+
+        if avg_time < best_time:
+            best_time = avg_time
+            best_time_parameters = report_suffix
+
+        score = total_score + (100 - avg_time*avg_time)
+        if score > optimum_score:
+            optimum_score = score
+            optimum_total_score = total_score
+            optimum_time = avg_time
+            optimum_parameters = report_suffix
+
+        rp.save_report(test_root_folder, report_suffix)
+
+    print("Best score: " + str(best_score) + "           Parameters: " + best_score_parameters)
+    print("Best avg time: " + str(best_time) + "           Parameters: " + best_time_parameters)
+    print("Optimum: score = " + str(optimum_total_score) + "          time = " + str(optimum_time) + "           Parameters: " + optimum_parameters)
