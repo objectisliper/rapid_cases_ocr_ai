@@ -92,6 +92,13 @@ class ReportGenerator():
         expected_json = os.path.join(test_folder_path, 'expected.json')
         with open(input_json) as json_file:
             request = json.load(json_file)
+        if "caseClasificationRules" in request.keys():
+            request["TextContains"] = request["caseClasificationRules"]["page"]
+            request["URLContains"] = request["caseClasificationRules"]["url"]
+            request.pop("caseClasificationRules", None)
+            request["SearchPhraseIdentifiers"] = request["searchPhraseIdentifiers"]
+            request.pop("searchPhraseIdentifiers", None)
+
 
         with open(expected_json) as json_file:
             expected_result = json.load(json_file)
