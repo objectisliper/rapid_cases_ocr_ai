@@ -87,7 +87,7 @@ class ReportGenerator():
 
         return score
 
-    def __process_videotest(self, test_folder_path, recognition_settings={}):
+    def process_videotest(self, test_folder_path, recognition_settings={}):
         input_json = os.path.join(test_folder_path, 'input.json')
         expected_json = os.path.join(test_folder_path, 'expected.json')
         with open(input_json) as json_file:
@@ -136,7 +136,7 @@ class ReportGenerator():
 
             print("processing folder: " + test_folder)
             try:
-                test_result, duration, score = self.__process_videotest(test_folder_path, recognition_settings)
+                test_result, duration, score = self.process_videotest(test_folder_path, recognition_settings)
                 total_duration += duration
                 row = [test_folder, score["SearchPhrasesFound"], score["URLContainsResults"], score["TextContainsResults"], score["Total"], duration, test_result]
                 self.report.append(row)
@@ -184,6 +184,20 @@ class ReportGenerator():
         with open(report_filename, "w", newline='', encoding='utf-8') as file:
             writer = csv.writer(file, delimiter=';')
             writer.writerows(self.report)
+        print('Report was sucessfully saved!')
+
+    def save_many_configuration_report(self, config_path, results: dict):
+        time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_filename = os.path.join(config_path, "report_" + time_suffix + "___many_configurations.csv")
+
+        list_for_saving = [["Configuration", "Total score", "Average time", "Optimum"]]
+        for configuration in results.keys():
+            list_for_saving.append(results[configuration])
+
+        print ('Saving report to file: ' + report_filename)
+        with open(report_filename, "w", newline='', encoding='utf-8') as file:
+            writer = csv.writer(file, delimiter=';')
+            writer.writerows(list_for_saving)
         print('Report was sucessfully saved!')
 
 
@@ -234,14 +248,23 @@ if __name__ == "__main__":
                                for value in test_settings[setting]]
 
     rp = ReportGenerator()
-    best_score = 0
-    best_time = 99999999999999
-    optimum_score = 0
-    optimum_total_score = 0
-    optimum_time = 9999999999999
-    best_score_parameters = ""
-    best_time_parameters = ""
-    optimum_parameters = ""
+
+    # single video test
+    # rp.process_videotest((pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'live' / 'ZjZO877mtGfcpprep-sLDKAhC-sYb84A').as_posix())
+
+    if len(test_confugurations) < 1:
+        rp.test_process_request___folder(test_root_folder)
+        rp.save_report(test_root_folder)
+    else:
+        results = {}
+        best_score = 0
+        best_time = 99999999999999
+        optimum_score = 0
+        optimum_total_score = 0
+        optimum_time = 9999999999999
+        best_score_parameters = ""
+        best_time_parameters = ""
+        optimum_parameters = ""
 
     for configuration in test_confugurations:
         report_suffix = get_report_suffix(configuration)
