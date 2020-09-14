@@ -29,7 +29,8 @@ class KeyFrameFinder:
         self.use_threshold_with_gausian_blur = False
         self.use_adaptiveThreshold = False
 
-        self.needed_ratio = 80
+        self.comparing_similarity_for_phrases = 80
+        self.min_word_confidence = 0
         self.threshold = motion_threshold
         self.skip_frames = 30  # skip_frames
         self.max_y_position_for_URL = 100
@@ -60,6 +61,8 @@ class KeyFrameFinder:
         if "use_threshold_with_gausian_blur" in settings: self.use_threshold_with_gausian_blur = recognition_settings["use_threshold_with_gausian_blur"]
 
         if "use_adaptiveThreshold" in settings: self.use_adaptiveThreshold = recognition_settings["use_adaptiveThreshold"]
+
+        if "comparing_similarity_for_phrases" in settings: self.comparing_similarity_for_phrases = recognition_settings["comparing_similarity_for_phrases"]
 
     def __save_recognition_csv(self, recognition_data):
         import datetime, os
@@ -162,21 +165,35 @@ class KeyFrameFinder:
 
     def __check_text_contains(self, whole_page_text):
         for key in self.text_contains_result.keys():
-            if not self.text_contains_result[key] and len(whole_page_text) + 5 >= len(key) and \
-                    (key in whole_page_text or fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio):
+            if not self.text_contains_result[key] \
+               and len(whole_page_text) + 5 >= len(key) \
+               and (
+                   key in whole_page_text
+                   or
+                   fuzz.partial_ratio(key, whole_page_text) >= self.comparing_similarity_for_phrases
+               ):
                 self.text_contains_result[key] = True
 
     def __check_url_contains(self, whole_page_text):
         for key in self.url_contains_result.keys():
-            if not self.url_contains_result[key] and len(whole_page_text) + 5 >= len(key) and \
-                    (key in whole_page_text or fuzz.partial_ratio(key, whole_page_text) >= self.needed_ratio):
+            if not self.url_contains_result[key] \
+               and len(whole_page_text) + 5 >= len(key) \
+               and (
+                   key.lower() in whole_page_text.lower()
+                   or
+                   fuzz.partial_ratio(key, whole_page_text) >= self.comparing_similarity_for_phrases
+               ):
                 self.url_contains_result[key] = True
 
     def __save_if_keyphrase(self, text):
         for phrase in self.search_phrases:
-            if len(text) + 5 >= len(phrase) and text not in self.found_lines and \
-                    fuzz.partial_ratio(phrase, text) >= self.needed_ratio:
-                    # phrase.lower() in text.lower():
+            if text not in self.found_lines \
+                    and len(text) + 5 >= len(phrase) \
+                    and (
+                        fuzz.partial_ratio(phrase, text) >= self.comparing_similarity_for_phrases
+                        or
+                        phrase.lower() in text.lower()
+                    ):
                 self.found_lines.append(text)
 
     def __get_page_text_by_lines(self, image_data: dict):
@@ -198,10 +215,9 @@ class KeyFrameFinder:
     def __get_blocks(self, recognition_data: dict):
         url_blocks = {}
         page_blocks = {}
-        min_confidence = 0
 
         for word_index, block_index in enumerate(recognition_data['block_num']):
-            if int(recognition_data['conf'][word_index]) > min_confidence:
+            if int(recognition_data['conf'][word_index]) > self.min_word_confidence:
                 if recognition_data['top'][word_index] > self.max_y_position_for_URL:
                 # if recognition_data['top'][word_index] > -100:
                     if block_index in page_blocks:
