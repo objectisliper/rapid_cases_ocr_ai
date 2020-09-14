@@ -23,7 +23,7 @@ class KeyFrameFinder:
         self.text_contains_result = {}
 
         # image preprocessing
-        self.use_gray_colors = True
+        self.use_gray_colors = False
         self.invert_colors = False
         self.use_morphology = False
         self.use_threshold_with_gausian_blur = False
