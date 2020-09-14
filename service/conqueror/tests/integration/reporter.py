@@ -31,6 +31,7 @@ from fuzzywuzzy import fuzz
 
 class ReportGenerator():
     report = []
+    phrase_similarity = 80
 
     def __clean_report(self):
         self.report = [["Video", "Phrases Found", "URL Contains", "Text Contains", "Total score", "Duration", "Response JSON"]]
@@ -67,7 +68,7 @@ class ReportGenerator():
                     if expected_phrase in real_phrase or \
                             (
                                 len(expected_phrase) <= int(round(len(real_phrase)*1.33, 0))
-                                and fuzz.partial_ratio(real_phrase, expected_phrase) > 80
+                                and fuzz.partial_ratio(real_phrase, expected_phrase) > self.phrase_similarity
                             ):
                         sum += 1
                         break
@@ -119,7 +120,13 @@ class ReportGenerator():
         end_time = time.time()
 
         test_duration = end_time - start_time
-        score = self.__calc_test_score(expected_result, response)
+        if "comparing_similarity_for_phrases" in recognition_settings:
+            default_phrase_similarity = self.phrase_similarity
+            self.phrase_similarity = recognition_settings["comparing_similarity_for_phrases"]
+            score = self.__calc_test_score(expected_result, response)
+            self.phrase_similarity = default_phrase_similarity
+        else:
+            score = self.__calc_test_score(expected_result, response)
 
         return response, test_duration, score
 
@@ -226,9 +233,8 @@ if __name__ == "__main__":
     # test_settings["use_adaptiveThreshold"] = [False, True]
     # test_settings["max_y_position_for_URL"] = [80, 90, 100, 110, 120]
     # test_settings["word_min_confidence"] = [-1, 0, 50, 80, 90, 95]
-    # test_settings["similar_word_rate"] = [50, 80, 90, 95, 100]
-    # test_confugurations = [{setting:value} for setting in test_settings.keys()
-    #                                         for value in test_settings[setting]]
+    test_settings["comparing_similarity_for_phrases"] = [50, 80, 90]
+
     fullgrid = True
 
     test_confugurations = []
