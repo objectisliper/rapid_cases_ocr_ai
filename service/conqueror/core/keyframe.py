@@ -32,7 +32,7 @@ class KeyFrameFinder:
         self.comparing_similarity_for_phrases = 80
         self.min_word_confidence = 0
         self.threshold = motion_threshold
-        self.skip_frames = 30  # skip_frames
+        self.skip_frames = 70  # skip_frames
         self.max_y_position_for_URL = 100
         self.object_detection_threshold = object_detection_threshold
 
