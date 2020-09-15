@@ -139,7 +139,8 @@ class KeyFrameFinder:
                 if line_text == '':
                     continue
 
-                # self.__check_text_contains(whole_page_text)
+                if self.max_y_position_for_URL < 1:
+                    self.__check_url_contains(line_text)
                 self.__check_text_contains(line_text)
                 self.__save_if_keyphrase(line_text)
 
@@ -147,7 +148,6 @@ class KeyFrameFinder:
                 if line_text == '':
                     continue
 
-                # self.__check_url_contains(whole_page_text)
                 self.__check_url_contains(line_text)
 
             if self.stop_on_first_keyframe_found:
