@@ -44,6 +44,7 @@ class KeyFrameFinder:
         self.skip_frames = 65
         self.max_y_position_for_URL = 90
         self.object_detection_threshold = object_detection_threshold
+        self.stop_on_first_keyframe_found = False
 
         self.search_phrases = search_phrases
 
