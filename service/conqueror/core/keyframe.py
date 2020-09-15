@@ -109,6 +109,10 @@ class KeyFrameFinder:
                 # self.__check_url_contains(whole_page_text)
                 self.__check_url_contains(line_text)
 
+            if self.stop_on_first_keyframe_found:
+                if len(self.found_lines) > 0:
+                    break
+
         return self.found_lines, self.url_contains_result, self.text_contains_result
 
     def __get_frame_iterator(self):
