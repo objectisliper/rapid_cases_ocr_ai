@@ -25,7 +25,8 @@ CELERY_WORKER_CONF_NAME = 'recognize_service_worker.conf'
 
 ASGI_SUPERVISOR_LOCAL_CONF_NAME = 'supervisor_aiohttp_recognize_service.conf'
 CELERY_BEAT_LOCAL_CONF_NAME = 'supervisor_recognize_service_beat.conf'
-CELERY_WORKER_LOCAL_CONF_NAME = 'supervisor_recognize_service_worker.conf'
+CELERY_WORKER_GET_VIDEOS_LOCAL_CONF_NAME = 'supervisor_recognize_service_get_videos_to_process_worker.conf'
+CELERY_WORKER_PROCESS_VIDEO_LOCAL_CONF_NAME = 'supervisor_recognize_service_process_video_worker.conf'
 
 NGINX_LOCAL_CONFIG_NAME = 'nginx_config.conf'
 
@@ -34,7 +35,8 @@ NGINX_CONFIG_NAME = 'recognize_service'
 SUPERVISOR_CONF_FILES = [
     (ASGI_SUPERVISOR_LOCAL_CONF_NAME, ASGI_SUPERVISOR_CONF_NAME),
     (CELERY_BEAT_LOCAL_CONF_NAME, CELERY_BEAT_CONF_NAME),
-    (CELERY_WORKER_LOCAL_CONF_NAME, CELERY_WORKER_CONF_NAME),
+    (CELERY_WORKER_GET_VIDEOS_LOCAL_CONF_NAME, CELERY_WORKER_GET_VIDEOS_LOCAL_CONF_NAME),
+    (CELERY_WORKER_PROCESS_VIDEO_LOCAL_CONF_NAME, CELERY_WORKER_PROCESS_VIDEO_LOCAL_CONF_NAME),
 ]
 
 CURRENT_FILEPATH = pathlib.Path(__file__).parent.as_posix()
