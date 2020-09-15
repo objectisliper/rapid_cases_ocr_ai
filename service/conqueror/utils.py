@@ -9,6 +9,7 @@ import urllib.parse
 
 import requests
 from sqlalchemy import create_engine
+from sqlalchemy.pool import NullPool
 
 from service.conqueror.settings import database_config
 from service.conqueror.settings.local import VIDEO_TEMP_DIR
@@ -23,7 +24,7 @@ class FileNotFoundException(Exception):
 def database_connection(wrapped_function):
     def wrapper(*args, **kwargs):
         db_url = DSN.format(**database_config['mysql'])
-        engine = create_engine(db_url)
+        engine = create_engine(db_url, poolclass=NullPool)
 
         with engine.connect() as connection:
             result = wrapped_function(connection=connection, *args, **kwargs)
