@@ -23,7 +23,7 @@ class FileNotFoundException(Exception):
 def database_connection(wrapped_function):
     def wrapper(*args, **kwargs):
         db_url = DSN.format(**database_config['mysql'])
-        engine = create_engine(db_url)
+        engine = create_engine(db_url, max_overflow=10)
 
         with engine.connect() as connection:
             result = wrapped_function(connection=connection, *args, **kwargs)
