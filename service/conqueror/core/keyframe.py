@@ -41,8 +41,8 @@ class KeyFrameFinder:
         self.comparing_similarity_for_phrases = 80
         self.min_word_confidence = 0
         self.threshold = motion_threshold
-        self.skip_frames = 50  # skip_frames
-        self.max_y_position_for_URL = 100
+        self.skip_frames = 65
+        self.max_y_position_for_URL = 90
         self.object_detection_threshold = object_detection_threshold
 
         self.search_phrases = search_phrases
