@@ -100,6 +100,13 @@ class ReportGenerator():
             request["SearchPhraseIdentifiers"] = request["searchPhraseIdentifiers"]
             request.pop("searchPhraseIdentifiers", None)
 
+        # None check
+        if request["TextContains"] is None:
+            request["TextContains"] = []
+        if request["URLContains"] is None:
+            request["URLContains"] = []
+        if request["SearchPhraseIdentifiers"] is None:
+            request["SearchPhraseIdentifiers"] = []
 
         with open(expected_json) as json_file:
             expected_result = json.load(json_file)
