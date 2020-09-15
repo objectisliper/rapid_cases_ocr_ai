@@ -100,6 +100,13 @@ class ReportGenerator():
             request["SearchPhraseIdentifiers"] = request["searchPhraseIdentifiers"]
             request.pop("searchPhraseIdentifiers", None)
 
+        # None check
+        if request["TextContains"] is None:
+            request["TextContains"] = []
+        if request["URLContains"] is None:
+            request["URLContains"] = []
+        if request["SearchPhraseIdentifiers"] is None:
+            request["SearchPhraseIdentifiers"] = []
 
         with open(expected_json) as json_file:
             expected_result = json.load(json_file)
@@ -225,7 +232,7 @@ if __name__ == "__main__":
     # test_root_folder = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'live').as_posix()
     test_settings = {}
     # test_settings["skip_frames"] = [10, 15, 20, 25, 30 , 35, 40, 45, 50, 60, 70, 80, 90, 100, 125, 150, 200, 300]
-    # test_settings["skip_frames"] = [20, 30, 50]
+    test_settings["skip_frames"] = [50]
     # test_settings["use_gray_colors"] = [False, True]
     # test_settings["invert_colors"] = [False, True]
     # test_settings["use_morphology"] = [False, True]
@@ -233,7 +240,7 @@ if __name__ == "__main__":
     # test_settings["use_adaptiveThreshold"] = [False, True]
     # test_settings["max_y_position_for_URL"] = [80, 90, 100, 110, 120]
     # test_settings["word_min_confidence"] = [-1, 0, 50, 80, 90, 95]
-    test_settings["comparing_similarity_for_phrases"] = [50, 80, 90]
+    # test_settings["comparing_similarity_for_phrases"] = [50, 80, 90]
 
     fullgrid = True
 
