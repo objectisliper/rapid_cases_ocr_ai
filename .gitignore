@@ -10,3 +10,4 @@
 /sockets/
 /service/conqueror/cli/cli_local.py
 /service/conqueror/jobs_from_live_base/
+/service/conqueror/single_job_download_from_live/

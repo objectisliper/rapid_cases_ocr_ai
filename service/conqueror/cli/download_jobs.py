@@ -1,22 +1,11 @@
-import base64
 from os import makedirs, walk
 from os.path import isdir
 from typing import List
 
-import simplejson
-
+from service.conqueror.cli.download_job import download_job
 from service.conqueror.db_models import JobModel, JobStatuses, JobStorageStatuses
-from service.conqueror.io import VideoFile
-from service.conqueror.utils import database_connection, get_video_from_amazon_server
+from service.conqueror.utils import database_connection
 
-EXPECTED_FILE_TEMPLATE = {
-    "SearchPhrasesFound": [
-    ],
-    "URLContainsResults": {
-    },
-    "TextContainsResults": {
-    }
-}
 
 
 @database_connection
@@ -44,19 +33,7 @@ def download_all_available_jobs():
 
     for job_number, job in enumerate(all_jobs_list):
         if job.id not in already_downloaded_jobs and job.id not in ignored_jobs:
-            jobs_dir = f'../jobs_from_live_base/{job.id}'
-            makedirs(jobs_dir)
-            video = get_video_from_amazon_server(job.id)
-            with open(f'{jobs_dir}/case.webm', 'wb') as video_file:
-                video_file.write(video)
-            with open(f'{jobs_dir}/input.json', 'w') as recognition_identifiers_file:
-                recognition_identifiers_file.write(
-                    simplejson.dumps(job.recognition_identifiers, indent=4, sort_keys=True)
-                )
-            with open(f'{jobs_dir}/expected.json', 'w') as expected_file:
-                expected_file.write(
-                    simplejson.dumps(EXPECTED_FILE_TEMPLATE, indent=4, sort_keys=True)
-                )
+            download_job(job, 'jobs_from_live_base')
         print(f'Processed {job_number + 1} of {jobs_to_process_count} Jobs')
 
 
