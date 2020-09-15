@@ -79,9 +79,13 @@ class KeyFrameFinder:
 
             # you can try --psm 11 and --psm 6
             whole_page_text = pytesseract.image_to_data(image, output_type='dict')
-            # whole_page_text2 = pytesseract.image_to_data(image, config='--psm 6', output_type='dict')
+            # whole_page_text2 = pytesseract.image_to_data(image, config='--psm 11', output_type='dict')
+            # whole_page_text3 = pytesseract.image_to_data(255 - image, output_type='dict')
             # self.__save_recognition_csv(whole_page_text)
             url_blocks, page_blocks = self.__get_blocks(whole_page_text)
+
+            # cv2.imshow("image", image)
+            # cv2.waitKey()
 
             # text_by_lines = self.__get_page_text_by_lines(whole_page_text)
 
@@ -95,7 +99,6 @@ class KeyFrameFinder:
 
                 # self.__check_text_contains(whole_page_text)
                 self.__check_text_contains(line_text)
-                # self.__check_url_contains(whole_page_text)
                 self.__save_if_keyphrase(line_text)
 
             for line_text in url_blocks:
@@ -298,7 +301,6 @@ class KeyFrameFinder:
         for word_index, block_index in enumerate(recognition_data['block_num']):
             if int(recognition_data['conf'][word_index]) > self.min_word_confidence:
                 if recognition_data['top'][word_index] > self.max_y_position_for_URL:
-                    # if recognition_data['top'][word_index] > -100:
                     if block_index in page_blocks:
                         page_blocks[block_index] = page_blocks[block_index] + ' ' + recognition_data['text'][word_index]
                     else:
