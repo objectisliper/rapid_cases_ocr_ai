@@ -120,41 +120,42 @@ class KeyFrameFinder:
             image = self.__image_preprocessing(frame)
 
             # you can try --psm 11 and --psm 6
-            whole_page_text = pytesseract.image_to_data(image, output_type='dict')
-            # whole_page_text2 = pytesseract.image_to_data(image, config='--psm 11', output_type='dict')
-            # whole_page_text3 = pytesseract.image_to_data(255 - image, output_type='dict')
+            recognition_data = pytesseract.image_to_data(image, output_type='dict')
+            # recognition_data2 = pytesseract.image_to_data(image, config='--psm 11', output_type='dict')
+            # recognition_data3 = pytesseract.image_to_data(255 - image, output_type='dict')
             # self.__save_recognition_csv(whole_page_text)
             url_blocks, page_blocks = self.__get_blocks(whole_page_text)
 
             # cv2.imshow("image", image)
             # cv2.waitKey()
 
-            # text_by_lines = self.__get_page_text_by_lines(whole_page_text)
-
-            # self.__check_is_special_contains(' '.join(whole_page_text['text']))
-
-            # for line_text in blocks:
-            # for line_text in text_by_lines:
-            for line_text in page_blocks:
-                if line_text == '':
-                    continue
-
-                if self.max_y_position_for_URL < 1:
-                    self.__check_url_contains(line_text)
-                self.__check_text_contains(line_text)
-                self.__save_if_keyphrase(line_text)
-
-            for line_text in url_blocks:
-                if line_text == '':
-                    continue
-
-                self.__check_url_contains(line_text)
+            self.__check_search_rules(recognition_data)
 
             if self.stop_on_first_keyframe_found:
                 if len(self.found_lines) > 0:
                     break
 
         return self.found_lines, self.url_contains_result, self.text_contains_result
+
+    def __check_search_rules(self, recognition_data):
+        url_blocks, page_blocks = self.__get_blocks(recognition_data)
+        # text_by_lines = self.__get_page_text_by_lines(whole_page_text)
+        # self.__check_is_special_contains(' '.join(whole_page_text['text']))
+        # for line_text in blocks:
+        # for line_text in text_by_lines:
+        for line_text in page_blocks:
+            if line_text == '':
+                continue
+
+            if self.max_y_position_for_URL < 1:
+                self.__check_url_contains(line_text)
+            self.__check_text_contains(line_text)
+            self.__save_if_keyphrase(line_text)
+        for line_text in url_blocks:
+            if line_text == '':
+                continue
+
+            self.__check_url_contains(line_text)
 
     def __get_frame_iterator(self):
         def writer():
