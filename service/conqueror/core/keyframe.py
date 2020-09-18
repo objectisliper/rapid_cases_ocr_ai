@@ -33,6 +33,9 @@ class KeyFrameFinder:
         self.text_contains_result = {}
         self.byte_video = byte_video
 
+        self.save_recognition_data_to_csv = False
+        self.save_image_with_recognized_text = False
+
         # image preprocessing
         self.use_gray_colors = False
         self.invert_colors = False
@@ -124,8 +127,13 @@ class KeyFrameFinder:
             # recognition_data2 = pytesseract.image_to_data(image, config='--psm 11', output_type='dict')
             # recognition_data3 = pytesseract.image_to_data(255 - image, output_type='dict')
 
-            # cv2.imshow("image", image)
-            # cv2.waitKey()
+            if self.save_recognition_data_to_csv:
+                self.__save_recognition_csv(recognition_data)
+
+            if self.save_image_with_recognized_text:
+                self.__save_recognized_image(frame, recognition_data)
+                # cv2.imshow("image", image)
+                # cv2.waitKey()
 
             self.__check_search_rules(recognition_data)
 
