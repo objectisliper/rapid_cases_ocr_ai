@@ -79,31 +79,6 @@ class KeyFrameFinder:
 
         if "comparing_similarity_for_phrases" in settings: self.comparing_similarity_for_phrases = recognition_settings["comparing_similarity_for_phrases"]
 
-    def __save_recognition_csv(self, recognition_data):
-        import datetime, os
-        time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_filename = os.path.join("recognize_dict" + time_suffix + ".csv")
-        try:
-            with open(report_filename, 'w', encoding='utf-8', newline='') as csv_file:
-                writer = csv.writer(csv_file)
-                writer.writerow(list(recognition_data.keys()))
-                for index, text in enumerate(recognition_data['text']):
-                    row = [recognition_data['level'][index],
-                                     recognition_data['page_num'][index],
-                                     recognition_data['block_num'][index],
-                                     recognition_data['par_num'][index],
-                                     recognition_data['line_num'][index],
-                                     recognition_data['word_num'][index],
-                                     recognition_data['left'][index],
-                                     recognition_data['top'][index],
-                                     recognition_data['width'][index],
-                                     recognition_data['height'][index],
-                                     recognition_data['conf'][index],
-                                     text]
-                    writer.writerow(row)
-        except IOError:
-            print("I/O error")
-
     def process_keyframes(self) -> ([str], dict, dict):
         if not self.byte_video:
             return self.found_lines, self.url_contains_result, self.text_contains_result
@@ -142,26 +117,6 @@ class KeyFrameFinder:
                     break
 
         return self.found_lines, self.url_contains_result, self.text_contains_result
-
-    def __check_search_rules(self, recognition_data):
-        url_blocks, page_blocks = self.__get_blocks(recognition_data)
-        # text_by_lines = self.__get_page_text_by_lines(whole_page_text)
-        # self.__check_is_special_contains(' '.join(whole_page_text['text']))
-        # for line_text in blocks:
-        # for line_text in text_by_lines:
-        for line_text in page_blocks:
-            if line_text == '':
-                continue
-
-            if self.max_y_position_for_URL < 1:
-                self.__check_url_contains(line_text)
-            self.__check_text_contains(line_text)
-            self.__save_if_keyphrase(line_text)
-        for line_text in url_blocks:
-            if line_text == '':
-                continue
-
-            self.__check_url_contains(line_text)
 
     def __get_frame_iterator(self):
         def writer():
@@ -254,6 +209,26 @@ class KeyFrameFinder:
 
         return image
 
+    def __check_search_rules(self, recognition_data):
+        url_blocks, page_blocks = self.__get_blocks(recognition_data)
+        # text_by_lines = self.__get_page_text_by_lines(whole_page_text)
+        # self.__check_is_special_contains(' '.join(whole_page_text['text']))
+        # for line_text in blocks:
+        # for line_text in text_by_lines:
+        for line_text in page_blocks:
+            if line_text == '':
+                continue
+
+            if self.max_y_position_for_URL < 1:
+                self.__check_url_contains(line_text)
+            self.__check_text_contains(line_text)
+            self.__save_if_keyphrase(line_text)
+        for line_text in url_blocks:
+            if line_text == '':
+                continue
+
+            self.__check_url_contains(line_text)
+
     def __check_text_contains(self, whole_page_text):
         for key in self.text_contains_result.keys():
             if not self.text_contains_result[key] \
@@ -323,6 +298,31 @@ class KeyFrameFinder:
         result_url_blocks = [block for block in url_blocks.values() if len(block.strip()) > 0]
         result_page_blocks = [block for block in page_blocks.values() if len(block.strip()) > 0]
         return result_url_blocks, result_page_blocks
+
+    def __save_recognition_csv(self, recognition_data):
+        import datetime, os
+        time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_filename = os.path.join("recognize_dict" + time_suffix + ".csv")
+        try:
+            with open(report_filename, 'w', encoding='utf-8', newline='') as csv_file:
+                writer = csv.writer(csv_file)
+                writer.writerow(list(recognition_data.keys()))
+                for index, text in enumerate(recognition_data['text']):
+                    row = [recognition_data['level'][index],
+                                     recognition_data['page_num'][index],
+                                     recognition_data['block_num'][index],
+                                     recognition_data['par_num'][index],
+                                     recognition_data['line_num'][index],
+                                     recognition_data['word_num'][index],
+                                     recognition_data['left'][index],
+                                     recognition_data['top'][index],
+                                     recognition_data['width'][index],
+                                     recognition_data['height'][index],
+                                     recognition_data['conf'][index],
+                                     text]
+                    writer.writerow(row)
+        except IOError:
+            print("I/O error")
 
     def __save_recognized_image(self, src_image, recognition_data):
         image = deepcopy(src_image)
