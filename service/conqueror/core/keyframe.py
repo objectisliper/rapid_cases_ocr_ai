@@ -42,6 +42,7 @@ class KeyFrameFinder:
         self.use_morphology = False
         self.use_threshold_with_gausian_blur = False
         self.use_adaptiveThreshold = False
+        self.increase_image_contrast = False
 
         self.comparing_similarity_for_phrases = 80
         self.min_word_confidence = 0
@@ -78,6 +79,8 @@ class KeyFrameFinder:
         if "use_adaptiveThreshold" in settings: self.use_adaptiveThreshold = recognition_settings["use_adaptiveThreshold"]
 
         if "comparing_similarity_for_phrases" in settings: self.comparing_similarity_for_phrases = recognition_settings["comparing_similarity_for_phrases"]
+
+        if "increase_image_contrast" in settings: self.increase_image_contrast = recognition_settings["increase_image_contrast"]
 
     def process_keyframes(self) -> ([str], dict, dict):
         if not self.byte_video:
@@ -203,6 +206,13 @@ class KeyFrameFinder:
             # Morph open to remove noise
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
             image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel, iterations=1)
+
+        if self.increase_image_contrast:
+            contrast = 64
+            f = 131 * (contrast + 127) / (127 * (131 - contrast))
+            alpha_c = f
+            gamma_c = 127 * (1 - f)
+            image = cv2.addWeighted(image, alpha_c, image, 0, gamma_c)
 
         if self.invert_colors:
             image = 255 - image
