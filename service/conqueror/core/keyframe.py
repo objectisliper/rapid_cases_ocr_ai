@@ -13,6 +13,8 @@ import json
 import subprocess
 import threading
 import shlex
+from copy import deepcopy
+import datetime, os
 from functools import partial
 
 import cv2
@@ -313,3 +315,29 @@ class KeyFrameFinder:
         result_url_blocks = [block for block in url_blocks.values() if len(block.strip()) > 0]
         result_page_blocks = [block for block in page_blocks.values() if len(block.strip()) > 0]
         return result_url_blocks, result_page_blocks
+
+    def __save_recognized_image(self, src_image, recognition_data):
+        image = deepcopy(src_image)
+        for i in range(0, len(recognition_data["text"])):
+            # extract the bounding box coordinates of the text region from
+            x = recognition_data["left"][i]
+            y = recognition_data["top"][i]
+            w = recognition_data["width"][i]
+            h = recognition_data["height"][i]
+            # extract the OCR text itself along with the confidence of the
+            # text localization
+            text = recognition_data["text"][i]
+            conf = int(recognition_data["conf"][i])
+            if conf < self.min_word_confidence:
+                continue
+
+            text = "".join([c if ord(c) < 128 else "" for c in text]).strip()
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 1)
+            cv2.putText(image, text, (x, max(10,y - 5)), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.3, (0, 0, 255), 1)
+
+        time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_filename = os.path.join("recognized_frame_" + time_suffix + ".jpg")
+
+        cv2.imwrite(report_filename, image)
+
