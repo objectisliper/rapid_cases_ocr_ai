@@ -107,8 +107,6 @@ class KeyFrameFinder:
 
         while True:
             # todo: research how we can use CV_CAP_PROP_POS_MSEC or CV_CAP_PROP_POS_FRAMES
-            # captured_video.set()
-            # CV_CAP_PROP_FPS
             # zzzz = video_handler.get(cv2.CAP_PROP_FRAME_COUNT)
             # zzzz = video_handler.get(cv2.cv2.CAP_PROP_FPS)
 
@@ -123,8 +121,6 @@ class KeyFrameFinder:
             recognition_data = pytesseract.image_to_data(image, output_type='dict')
             # recognition_data2 = pytesseract.image_to_data(image, config='--psm 11', output_type='dict')
             # recognition_data3 = pytesseract.image_to_data(255 - image, output_type='dict')
-            # self.__save_recognition_csv(whole_page_text)
-            url_blocks, page_blocks = self.__get_blocks(whole_page_text)
 
             # cv2.imshow("image", image)
             # cv2.waitKey()
