@@ -13,6 +13,8 @@ import json
 import subprocess
 import threading
 import shlex
+from copy import deepcopy
+import datetime, os
 from functools import partial
 
 import cv2
@@ -31,18 +33,22 @@ class KeyFrameFinder:
         self.text_contains_result = {}
         self.byte_video = byte_video
 
+        self.save_recognition_data_to_csv = False
+        self.save_image_with_recognized_text = False
+
         # image preprocessing
         self.use_gray_colors = False
         self.invert_colors = False
         self.use_morphology = False
         self.use_threshold_with_gausian_blur = False
         self.use_adaptiveThreshold = False
+        self.increase_image_contrast = False
 
         self.comparing_similarity_for_phrases = 80
         self.min_word_confidence = 0
         self.threshold = motion_threshold
-        self.skip_frames = 1
-        self.max_y_position_for_URL = 90
+        self.skip_frames = 65
+        self.max_y_position_for_URL = 80
         self.object_detection_threshold = object_detection_threshold
         self.stop_on_first_keyframe_found = False
 
@@ -74,30 +80,7 @@ class KeyFrameFinder:
 
         if "comparing_similarity_for_phrases" in settings: self.comparing_similarity_for_phrases = recognition_settings["comparing_similarity_for_phrases"]
 
-    def __save_recognition_csv(self, recognition_data):
-        import datetime, os
-        time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_filename = os.path.join("recognize_dict" + time_suffix + ".csv")
-        try:
-            with open(report_filename, 'w', encoding='utf-8', newline='') as csv_file:
-                writer = csv.writer(csv_file)
-                writer.writerow(list(recognition_data.keys()))
-                for index, text in enumerate(recognition_data['text']):
-                    row = [recognition_data['level'][index],
-                                     recognition_data['page_num'][index],
-                                     recognition_data['block_num'][index],
-                                     recognition_data['par_num'][index],
-                                     recognition_data['line_num'][index],
-                                     recognition_data['word_num'][index],
-                                     recognition_data['left'][index],
-                                     recognition_data['top'][index],
-                                     recognition_data['width'][index],
-                                     recognition_data['height'][index],
-                                     recognition_data['conf'][index],
-                                     text]
-                    writer.writerow(row)
-        except IOError:
-            print("I/O error")
+        if "increase_image_contrast" in settings: self.increase_image_contrast = recognition_settings["increase_image_contrast"]
 
     def process_keyframes(self) -> ([str], dict, dict):
         if not self.byte_video:
@@ -107,8 +90,6 @@ class KeyFrameFinder:
 
         while True:
             # todo: research how we can use CV_CAP_PROP_POS_MSEC or CV_CAP_PROP_POS_FRAMES
-            # captured_video.set()
-            # CV_CAP_PROP_FPS
             # zzzz = video_handler.get(cv2.CAP_PROP_FRAME_COUNT)
             # zzzz = video_handler.get(cv2.cv2.CAP_PROP_FPS)
 
@@ -120,35 +101,19 @@ class KeyFrameFinder:
             image = self.__image_preprocessing(frame)
 
             # you can try --psm 11 and --psm 6
-            whole_page_text = pytesseract.image_to_data(image, output_type='dict')
-            # whole_page_text2 = pytesseract.image_to_data(image, config='--psm 11', output_type='dict')
-            # whole_page_text3 = pytesseract.image_to_data(255 - image, output_type='dict')
-            # self.__save_recognition_csv(whole_page_text)
-            url_blocks, page_blocks = self.__get_blocks(whole_page_text)
+            recognition_data = pytesseract.image_to_data(image, output_type='dict')
+            # recognition_data2 = pytesseract.image_to_data(image, config='--psm 11', output_type='dict')
+            # recognition_data3 = pytesseract.image_to_data(255 - image, output_type='dict')
 
-            # cv2.imshow("image", image)
-            # cv2.waitKey()
+            if self.save_recognition_data_to_csv:
+                self.__save_recognition_csv(recognition_data)
 
-            # text_by_lines = self.__get_page_text_by_lines(whole_page_text)
+            if self.save_image_with_recognized_text:
+                self.__save_recognized_image(frame, recognition_data)
+                # cv2.imshow("image", image)
+                # cv2.waitKey()
 
-            # self.__check_is_special_contains(' '.join(whole_page_text['text']))
-
-            # for line_text in blocks:
-            # for line_text in text_by_lines:
-            for line_text in page_blocks:
-                if line_text == '':
-                    continue
-
-                if self.max_y_position_for_URL < 1:
-                    self.__check_url_contains(line_text)
-                self.__check_text_contains(line_text)
-                self.__save_if_keyphrase(line_text)
-
-            for line_text in url_blocks:
-                if line_text == '':
-                    continue
-
-                self.__check_url_contains(line_text)
+            self.__check_search_rules(recognition_data)
 
             if self.stop_on_first_keyframe_found:
                 if len(self.found_lines) > 0:
@@ -242,10 +207,37 @@ class KeyFrameFinder:
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
             image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel, iterations=1)
 
+        if self.increase_image_contrast:
+            contrast = 64
+            f = 131 * (contrast + 127) / (127 * (131 - contrast))
+            alpha_c = f
+            gamma_c = 127 * (1 - f)
+            image = cv2.addWeighted(image, alpha_c, image, 0, gamma_c)
+
         if self.invert_colors:
             image = 255 - image
 
         return image
+
+    def __check_search_rules(self, recognition_data):
+        url_blocks, page_blocks = self.__get_blocks(recognition_data)
+        # text_by_lines = self.__get_page_text_by_lines(whole_page_text)
+        # self.__check_is_special_contains(' '.join(whole_page_text['text']))
+        # for line_text in blocks:
+        # for line_text in text_by_lines:
+        for line_text in page_blocks:
+            if line_text == '':
+                continue
+
+            if self.max_y_position_for_URL < 1:
+                self.__check_url_contains(line_text)
+            self.__check_text_contains(line_text)
+            self.__save_if_keyphrase(line_text)
+        for line_text in url_blocks:
+            if line_text == '':
+                continue
+
+            self.__check_url_contains(line_text)
 
     def __check_text_contains(self, whole_page_text):
         for key in self.text_contains_result.keys():
@@ -316,3 +308,54 @@ class KeyFrameFinder:
         result_url_blocks = [block for block in url_blocks.values() if len(block.strip()) > 0]
         result_page_blocks = [block for block in page_blocks.values() if len(block.strip()) > 0]
         return result_url_blocks, result_page_blocks
+
+    def __save_recognition_csv(self, recognition_data):
+        import datetime, os
+        time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_filename = os.path.join("recognize_dict" + time_suffix + ".csv")
+        try:
+            with open(report_filename, 'w', encoding='utf-8', newline='') as csv_file:
+                writer = csv.writer(csv_file)
+                writer.writerow(list(recognition_data.keys()))
+                for index, text in enumerate(recognition_data['text']):
+                    row = [recognition_data['level'][index],
+                                     recognition_data['page_num'][index],
+                                     recognition_data['block_num'][index],
+                                     recognition_data['par_num'][index],
+                                     recognition_data['line_num'][index],
+                                     recognition_data['word_num'][index],
+                                     recognition_data['left'][index],
+                                     recognition_data['top'][index],
+                                     recognition_data['width'][index],
+                                     recognition_data['height'][index],
+                                     recognition_data['conf'][index],
+                                     text]
+                    writer.writerow(row)
+        except IOError:
+            print("I/O error")
+
+    def __save_recognized_image(self, src_image, recognition_data):
+        image = deepcopy(src_image)
+        for i in range(0, len(recognition_data["text"])):
+            # extract the bounding box coordinates of the text region from
+            x = recognition_data["left"][i]
+            y = recognition_data["top"][i]
+            w = recognition_data["width"][i]
+            h = recognition_data["height"][i]
+            # extract the OCR text itself along with the confidence of the
+            # text localization
+            text = recognition_data["text"][i]
+            conf = int(recognition_data["conf"][i])
+            if conf < self.min_word_confidence:
+                continue
+
+            text = "".join([c if ord(c) < 128 else "" for c in text]).strip()
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 1)
+            cv2.putText(image, text, (x, max(10,y - 5)), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.3, (0, 0, 255), 1)
+
+        time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_filename = os.path.join("recognized_frame_" + time_suffix + ".jpg")
+
+        cv2.imwrite(report_filename, image)
+
