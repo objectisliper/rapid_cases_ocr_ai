@@ -55,6 +55,7 @@ def process_video(job_id):
     print('end processing')
     print(result)
     job.job_processed(json.dumps(result))
+    print('results saved')
 
 
 celery_broker.add_periodic_task(schedule=1.0, sig=get_videos_to_process.s(), queue='recognizer_scheduling')
