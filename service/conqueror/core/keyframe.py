@@ -66,21 +66,29 @@ class KeyFrameFinder:
 
     def __load_recognition_settings(self, recognition_settings):
         settings = recognition_settings.keys()
-        if "skip_frames" in settings: self.skip_frames = recognition_settings["skip_frames"]
+        if "skip_frames" in settings:
+            self.skip_frames = recognition_settings["skip_frames"]
 
-        if "use_gray_colors" in settings: self.use_gray_colors = recognition_settings["use_gray_colors"]
+        if "use_gray_colors" in settings:
+            self.use_gray_colors = recognition_settings["use_gray_colors"]
 
-        if "invert_colors" in settings: self.invert_colors = recognition_settings["invert_colors"]
+        if "invert_colors" in settings:
+            self.invert_colors = recognition_settings["invert_colors"]
 
-        if "use_morphology" in settings: self.use_morphology = recognition_settings["use_morphology"]
+        if "use_morphology" in settings:
+            self.use_morphology = recognition_settings["use_morphology"]
 
-        if "use_threshold_with_gausian_blur" in settings: self.use_threshold_with_gausian_blur = recognition_settings["use_threshold_with_gausian_blur"]
+        if "use_threshold_with_gausian_blur" in settings:
+            self.use_threshold_with_gausian_blur = recognition_settings["use_threshold_with_gausian_blur"]
 
-        if "use_adaptiveThreshold" in settings: self.use_adaptiveThreshold = recognition_settings["use_adaptiveThreshold"]
+        if "use_adaptiveThreshold" in settings:
+            self.use_adaptiveThreshold = recognition_settings["use_adaptiveThreshold"]
 
-        if "comparing_similarity_for_phrases" in settings: self.comparing_similarity_for_phrases = recognition_settings["comparing_similarity_for_phrases"]
+        if "comparing_similarity_for_phrases" in settings:
+            self.comparing_similarity_for_phrases = recognition_settings["comparing_similarity_for_phrases"]
 
-        if "increase_image_contrast" in settings: self.increase_image_contrast = recognition_settings["increase_image_contrast"]
+        if "increase_image_contrast" in settings:
+            self.increase_image_contrast = recognition_settings["increase_image_contrast"]
 
     def process_keyframes(self) -> ([str], dict, dict):
         if not self.byte_video:
