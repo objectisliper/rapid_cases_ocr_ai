@@ -44,7 +44,8 @@ class KeyFrameFinder:
         self.comparing_similarity_for_phrases = 80
         self.min_word_confidence = 0
         self.threshold = motion_threshold
-        self.skip_frames = 50
+        self.frame_per_second = 2
+        self.frame_step = 50
         self.max_y_position_for_URL = 80
         self.object_detection_threshold = object_detection_threshold
         self.stop_on_first_keyframe_found = False
@@ -181,8 +182,9 @@ class KeyFrameFinder:
 
         # FFmpeg input PIPE: WebM encoded data as stream of bytes.
         # FFmpeg output PIPE: decoded video frames in BGR format.
-        process = subprocess.Popen(shlex.split('ffmpeg -i pipe: -f rawvideo -pix_fmt bgr24 -an -sn -vf '
-                                               f'"select=not(mod(n\,{self.skip_frames}))" -vsync vfr -q:v 2 pipe:'),
+        process = subprocess.Popen(shlex.split('ffmpeg -i pipe: -f rawvideo -pix_fmt bgr24 -an -sn '
+                                               f'-vf fps=fps={self.frame_per_second} '
+                                               f'-vsync vfr -q:v 2 pipe:'),
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, bufsize=10 ** 8)
 
