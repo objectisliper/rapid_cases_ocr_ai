@@ -29,7 +29,7 @@ def process_video(request_data: str, recognition_settings):
     # video_file.stored_file = save_video_to_temporary_directory(video_file)
     # # TODO Need preprocessing, maybe creating a pictures and preprocess image
     # captured_video = cv2.VideoCapture(video_file.stored_file)
-    keyframe_finder = KeyFrameFinder(0.3, 10, object_detection_threshold=0.4,
+    keyframe_finder = KeyFrameFinder(0.3, object_detection_threshold=0.4,
                                      search_phrases=data['SearchPhraseIdentifiers'], url_contains=data['URLContains'],
                                      text_contains=data['TextContains'], recognition_settings=recognition_settings,
                                      byte_video=base64.b64decode(data['VideoBody']))

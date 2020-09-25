@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import List
 
 from sqlalchemy import (
-    MetaData, Table, Column, Integer, String, Date, Enum, Text, DateTime, SmallInteger, or_
+    MetaData, Table, Column, Integer, String, Enum, Text, DateTime, SmallInteger, or_
 )
 
 from service.conqueror.utils import database_connection, RecognitionTimeoutRepeatExceededException

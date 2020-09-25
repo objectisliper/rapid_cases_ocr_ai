@@ -7,25 +7,30 @@ Vyacheslav Morozov, 2020
 vyacheslav@behealthy.ai
 """
 import base64
+import copy
 import csv
 import io
 import json
+import multiprocessing
 import subprocess
 import threading
 import shlex
 from copy import deepcopy
 import datetime, os
 from functools import partial
+from multiprocessing import Queue
 
 import cv2
 import numpy
 import pytesseract
 from fuzzywuzzy import fuzz
 
+from service.conqueror.core.keyframe_multipocessing_helper import KeyframeMultiprocessingHelper
+
 
 class KeyFrameFinder:
 
-    def __init__(self, motion_threshold=0.5, skip_frames=100,
+    def __init__(self, motion_threshold=0.5,
                  object_detection_threshold=0.5, search_phrases: [str] = [], url_contains: [str] = [],
                  text_contains: [str] = [], recognition_settings={}, byte_video: bytes = b''):
         self.found_lines = []
@@ -36,18 +41,10 @@ class KeyFrameFinder:
         self.save_recognition_data_to_csv = False
         self.save_image_with_recognized_text = False
 
-        # image preprocessing
-        self.use_gray_colors = False
-        self.invert_colors = False
-        self.use_morphology = False
-        self.use_threshold_with_gausian_blur = False
-        self.use_adaptiveThreshold = False
-        self.increase_image_contrast = False
-
         self.comparing_similarity_for_phrases = 80
         self.min_word_confidence = 0
         self.threshold = motion_threshold
-        self.skip_frames = 65
+        self.skip_frames = 50
         self.max_y_position_for_URL = 80
         self.object_detection_threshold = object_detection_threshold
         self.stop_on_first_keyframe_found = False
@@ -62,46 +59,87 @@ class KeyFrameFinder:
 
         self.templates = {}
 
-        self.__load_recognition_settings(recognition_settings)
-
     def process_keyframes(self) -> ([str], dict, dict):
         if not self.byte_video:
             return self.found_lines, self.url_contains_result, self.text_contains_result
 
         frame_iterator = self.__get_frame_iterator()
 
-        while True:
-            # todo: research how we can use CV_CAP_PROP_POS_MSEC or CV_CAP_PROP_POS_FRAMES
-            # zzzz = video_handler.get(cv2.CAP_PROP_FRAME_COUNT)
-            # zzzz = video_handler.get(cv2.cv2.CAP_PROP_FPS)
+        final_url_result = copy.deepcopy(self.url_contains_result)
 
-            frame = next(frame_iterator)
-            print('keyframe step')
-            if frame is None:
-                break
+        final_text_result = copy.deepcopy(self.text_contains_result)
 
-            image = self.__image_preprocessing(frame)
+        final_key_phrase_result = set()
+
+        cpu_count = multiprocessing.cpu_count()
+
+        print(f'Now i will use {cpu_count} core')
+
+        result_queue = Queue()
+
+        process_frame = True
+
+        os.environ['OMP_THREAD_LIMIT'] = '1'
+
+        while process_frame:
+
+            # image = self.__image_preprocessing(frame)
 
             # you can try --psm 11 and --psm 6
-            recognition_data = pytesseract.image_to_data(image, output_type='dict')
+            # recognition_data = pytesseract.image_to_data(image, output_type='dict')
             # recognition_data2 = pytesseract.image_to_data(image, config='--psm 11', output_type='dict')
             # recognition_data3 = pytesseract.image_to_data(255 - image, output_type='dict')
 
-            if self.save_recognition_data_to_csv:
-                self.__save_recognition_csv(recognition_data)
+            # Todo Для этого есть переменные окружения, свойства класса использовать для такого - плохо.
+            # if self.save_recognition_data_to_csv:
+            #     self.__save_recognition_csv(recognition_data)
+            #
+            # if self.save_image_with_recognized_text:
+            #     self.__save_recognized_image(frame, recognition_data)
+            # cv2.imshow("image", image)
+            # cv2.waitKey()
 
-            if self.save_image_with_recognized_text:
-                self.__save_recognized_image(frame, recognition_data)
-                # cv2.imshow("image", image)
-                # cv2.waitKey()
+            # self.__check_search_rules(recognition_data)
 
-            self.__check_search_rules(recognition_data)
+            # if self.stop_on_first_keyframe_found:
+            #     if len(self.found_lines) > 0:
+            #         break
 
-            if self.stop_on_first_keyframe_found:
-                if len(self.found_lines) > 0:
+            process_list = []
+
+            for i in range(cpu_count):
+                frame = next(frame_iterator)
+                if frame is None:
+                    process_frame = False
+                    print('final keyframe')
                     break
 
-        return self.found_lines, self.url_contains_result, self.text_contains_result
+                frame_processor = KeyframeMultiprocessingHelper(url_search_keys=self.url_contains_result,
+                                                                text_search_keys=self.text_contains_result,
+                                                                key_phrases=self.search_phrases)
+
+                process = multiprocessing.Process(target=frame_processor, args=(frame, result_queue, i))
+                process_list.append(process)
+                process.start()
+
+            if len(process_list) < 1:
+                break
+
+            for process in process_list:
+                (url_result, text_result, key_phrases_result) = result_queue.get()
+
+                final_url_result = {key: final_url_result[key] or item for key, item in url_result.items()}
+
+                final_text_result = {key: final_text_result[key] or item for key, item in text_result.items()}
+
+                final_key_phrase_result = final_key_phrase_result.union(key_phrases_result)
+
+            for process in process_list:
+                process.join()
+
+        result_queue.close()
+
+        return list(final_key_phrase_result), final_url_result, final_text_result
 
     def __get_frame_iterator(self):
         def writer():
@@ -160,7 +198,7 @@ class KeyFrameFinder:
                 stream.close()
                 thread.join()
                 process.wait(1)
-                yield None # Break loop if no more bytes.
+                yield None  # Break loop if no more bytes.
 
             # Transform the byte read into a NumPy array
             in_frame = (numpy.frombuffer(in_bytes, numpy.uint8).reshape([height, width, 3]))
@@ -170,152 +208,6 @@ class KeyFrameFinder:
 
             # for i in range(70):
             #     process.stdout.read(width * height * 3)
-
-    def __load_recognition_settings(self, recognition_settings):
-        settings = recognition_settings.keys()
-        if "skip_frames" in settings:
-            self.skip_frames = recognition_settings["skip_frames"]
-
-        if "use_gray_colors" in settings:
-            self.use_gray_colors = recognition_settings["use_gray_colors"]
-
-        if "invert_colors" in settings:
-            self.invert_colors = recognition_settings["invert_colors"]
-
-        if "use_morphology" in settings:
-            self.use_morphology = recognition_settings["use_morphology"]
-
-        if "use_threshold_with_gausian_blur" in settings:
-            self.use_threshold_with_gausian_blur = recognition_settings["use_threshold_with_gausian_blur"]
-
-        if "use_adaptiveThreshold" in settings:
-            self.use_adaptiveThreshold = recognition_settings["use_adaptiveThreshold"]
-
-        if "comparing_similarity_for_phrases" in settings:
-            self.comparing_similarity_for_phrases = recognition_settings["comparing_similarity_for_phrases"]
-
-        if "increase_image_contrast" in settings:
-            self.increase_image_contrast = recognition_settings["increase_image_contrast"]
-
-    def __image_preprocessing(self, frame):
-        image = frame[..., 0]
-
-        if self.use_adaptiveThreshold:
-            image = cv2.adaptiveThreshold(image, 220, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, 2)
-
-        if self.use_gray_colors:
-            image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-        if self.use_threshold_with_gausian_blur:
-            blur = cv2.GaussianBlur(image, (3, 3), 0)
-            image = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
-
-        if self.use_morphology:
-            # Morph open to remove noise
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel, iterations=1)
-
-        if self.increase_image_contrast:
-            contrast = 64
-            f = 131 * (contrast + 127) / (127 * (131 - contrast))
-            alpha_c = f
-            gamma_c = 127 * (1 - f)
-            image = cv2.addWeighted(image, alpha_c, image, 0, gamma_c)
-
-        if self.invert_colors:
-            image = 255 - image
-
-        return image
-
-    def __check_search_rules(self, recognition_data):
-        url_blocks, page_blocks = self.__get_blocks(recognition_data)
-        # text_by_lines = self.__get_page_text_by_lines(whole_page_text)
-        # self.__check_is_special_contains(' '.join(whole_page_text['text']))
-        # for line_text in blocks:
-        # for line_text in text_by_lines:
-        for line_text in page_blocks:
-            if line_text == '':
-                continue
-
-            if self.max_y_position_for_URL < 1:
-                self.__check_url_contains(line_text)
-            self.__check_text_contains(line_text)
-            self.__save_if_keyphrase(line_text)
-        for line_text in url_blocks:
-            if line_text == '':
-                continue
-
-            self.__check_url_contains(line_text)
-
-    def __check_text_contains(self, whole_page_text):
-        for key in self.text_contains_result.keys():
-            if not self.text_contains_result[key] \
-               and len(whole_page_text) + 5 >= len(key) \
-               and (
-                   key in whole_page_text
-                   or
-                   fuzz.partial_ratio(key, whole_page_text) >= self.comparing_similarity_for_phrases
-               ):
-                self.text_contains_result[key] = True
-
-    def __check_url_contains(self, whole_page_text):
-        for key in self.url_contains_result.keys():
-            if not self.url_contains_result[key] \
-               and len(whole_page_text) + 5 >= len(key) \
-               and (
-                   key.lower() in whole_page_text.lower()
-                   or
-                   fuzz.partial_ratio(key, whole_page_text) >= self.comparing_similarity_for_phrases
-               ):
-                self.url_contains_result[key] = True
-
-    def __save_if_keyphrase(self, text):
-        for phrase in self.search_phrases:
-            if text not in self.found_lines \
-                    and len(text) + 5 >= len(phrase) \
-                    and (
-                        fuzz.partial_ratio(phrase, text) >= self.comparing_similarity_for_phrases
-                        or
-                        phrase.lower() in text.lower()
-                    ):
-                self.found_lines.append(text)
-
-    def __get_page_text_by_lines(self, image_data: dict):
-        result_list = {}
-
-        for index, value in enumerate(image_data['top']):
-
-            line_next_word = image_data['text'][index]
-
-            if result_list.get(str(value)):
-                result_list[str(value)] = result_list.get(str(value)) + ' ' + line_next_word
-            else:
-                result_list[str(value)] = line_next_word
-
-        result_list = list(set(result_list.values()))
-
-        return result_list
-
-    def __get_blocks(self, recognition_data: dict):
-        url_blocks = {}
-        page_blocks = {}
-
-        for word_index, block_index in enumerate(recognition_data['block_num']):
-            if int(recognition_data['conf'][word_index]) > self.min_word_confidence:
-                if recognition_data['top'][word_index] > self.max_y_position_for_URL:
-                    if block_index in page_blocks:
-                        page_blocks[block_index] = page_blocks[block_index] + ' ' + recognition_data['text'][word_index]
-                    else:
-                        page_blocks[block_index] = recognition_data['text'][word_index]
-                else:
-                    if block_index in url_blocks:
-                        url_blocks[block_index] = url_blocks[block_index] + ' ' + recognition_data['text'][word_index]
-                    else:
-                        url_blocks[block_index] = recognition_data['text'][word_index]
-
-        result_url_blocks = [block for block in url_blocks.values() if len(block.strip()) > 0]
-        result_page_blocks = [block for block in page_blocks.values() if len(block.strip()) > 0]
-        return result_url_blocks, result_page_blocks
 
     def __save_recognition_csv(self, recognition_data):
         import datetime, os
@@ -327,17 +219,17 @@ class KeyFrameFinder:
                 writer.writerow(list(recognition_data.keys()))
                 for index, text in enumerate(recognition_data['text']):
                     row = [recognition_data['level'][index],
-                                     recognition_data['page_num'][index],
-                                     recognition_data['block_num'][index],
-                                     recognition_data['par_num'][index],
-                                     recognition_data['line_num'][index],
-                                     recognition_data['word_num'][index],
-                                     recognition_data['left'][index],
-                                     recognition_data['top'][index],
-                                     recognition_data['width'][index],
-                                     recognition_data['height'][index],
-                                     recognition_data['conf'][index],
-                                     text]
+                           recognition_data['page_num'][index],
+                           recognition_data['block_num'][index],
+                           recognition_data['par_num'][index],
+                           recognition_data['line_num'][index],
+                           recognition_data['word_num'][index],
+                           recognition_data['left'][index],
+                           recognition_data['top'][index],
+                           recognition_data['width'][index],
+                           recognition_data['height'][index],
+                           recognition_data['conf'][index],
+                           text]
                     writer.writerow(row)
         except IOError:
             print("I/O error")
@@ -359,11 +251,10 @@ class KeyFrameFinder:
 
             text = "".join([c if ord(c) < 128 else "" for c in text]).strip()
             cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 1)
-            cv2.putText(image, text, (x, max(10,y - 5)), cv2.FONT_HERSHEY_SIMPLEX,
+            cv2.putText(image, text, (x, max(10, y - 5)), cv2.FONT_HERSHEY_SIMPLEX,
                         0.3, (0, 0, 255), 1)
 
         time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         report_filename = os.path.join("recognized_frame_" + time_suffix + ".jpg")
 
         cv2.imwrite(report_filename, image)
-
