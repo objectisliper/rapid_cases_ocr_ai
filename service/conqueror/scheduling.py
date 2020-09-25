@@ -7,7 +7,8 @@ from kombu import Exchange, Queue
 from service.conqueror.db_models import select_uploaded_jobs, select_job_by_id
 from service.conqueror.managers import process_request
 from service.conqueror.settings.local import CELERY_BROKER_URL
-from service.conqueror.utils import get_video_from_amazon_server, FileNotFoundException
+from service.conqueror.utils import get_video_from_amazon_server, FileNotFoundException, \
+    RecognitionTimeoutRepeatExceededException
 
 celery_broker = Celery('tasks', broker=CELERY_BROKER_URL)
 
@@ -29,8 +30,14 @@ celery_broker.conf.task_routes = {'service.conqueror.scheduling.process_video': 
 def get_videos_to_process():
     jobs = select_uploaded_jobs()
     for job in jobs:
-        process_video.delay(job.id)
-        job.job_start_processing()
+        try:
+            job.job_start_processing()
+        except RecognitionTimeoutRepeatExceededException as e:
+            print(str(e) + f' jobId: {job.id}')
+            job.exception_catched(str(e))
+            continue
+        else:
+            process_video.delay(job.id)
 
 
 @celery_broker.task

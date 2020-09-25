@@ -9,3 +9,5 @@ CURSOR_DATA_SAMPLES = '/Users/drozdovsky/workspace/conqueror/data/cursors/'
 CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672'
 
 os.environ['RECOGNITION_TIMEOUT_SECONDS'] = str(1800)
+os.environ['SCHEDULING_RECOGNITION_JOB_REPEAT'] = str(3)
+os.environ['SCHEDULING_RECOGNITION_JOB_TIMEOUT'] = str(1800)

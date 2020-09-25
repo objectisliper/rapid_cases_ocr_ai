@@ -36,7 +36,7 @@ def process_video(request_data: str, recognition_settings):
 
     # Set timeout for processing
     signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(int(os.environ.get('RECOGNITION_TIMEOUT_SECONDS', 0)) or 1800)
+    signal.alarm(int(os.environ.get('RECOGNITION_TIMEOUT_SECONDS', 1800)))
 
     found_lines, url_contains_results, text_contains_result = keyframe_finder.process_keyframes()
 
