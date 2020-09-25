@@ -47,6 +47,7 @@ def process_video(job_id):
     data['URLContains'] = job.url_contains
     data['TextContains'] = job.text_contains
     json_encoded_request = json.dumps(data)
+
     try:
         result = process_request(json_encoded_request)
     except Exception as e:

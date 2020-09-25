@@ -21,6 +21,18 @@ class FileNotFoundException(Exception):
     pass
 
 
+class RecognitionTimeoutException(Exception):
+    pass
+
+
+class RecognitionTimeoutRepeatExceededException(Exception):
+    pass
+
+
+def timeout_handler(signum, frame):
+    raise RecognitionTimeoutException('Recognition take too much time')
+
+
 def database_connection(wrapped_function):
     def wrapper(*args, **kwargs):
         db_url = DSN.format(**database_config['mysql'])

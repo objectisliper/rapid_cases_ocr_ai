@@ -10,45 +10,20 @@ michael@drozdovsky.com
 """
 import base64
 import json
-from multiprocessing.context import Process
-
-import cv2
-import logging
-
-import numpy
+import os
+import signal
 
 from .core.keyframe import KeyFrameFinder
-from .io import VideoFile
-import io
-from .utils import save_video_to_temporary_directory
-
-logger = logging.getLogger('async_response')
-
-default_rule = """
-    {
-        "rules": [{
-    	"id": 151212,
-        "steps": [
-    	    {
-                "order": 0,
-                "URLcondition": "!contains",
-                "exact": 0,
-                "URLtext": "someth",
-                "ConditionsLogic": "and",
-                "PageContentsCondition": "contains",
-                "PageText": "exception"
-    	    }
-          ]
-    }]
-    }
-    """
+from .utils import timeout_handler
 
 
-def process_request(data, recognition_settings={}):
+def process_request(data: str, recognition_settings: dict = None):
+    if recognition_settings is None:
+        recognition_settings = {}
     return process_video(data, recognition_settings)
 
 
-def process_video(request_data: str, recognition_settings={}):
+def process_video(request_data: str, recognition_settings):
     data = json.loads(request_data)
 
     # video_file.stored_file = save_video_to_temporary_directory(video_file)
@@ -59,7 +34,13 @@ def process_video(request_data: str, recognition_settings={}):
                                      text_contains=data['TextContains'], recognition_settings=recognition_settings,
                                      byte_video=base64.b64decode(data['VideoBody']))
 
+    # Set timeout for processing
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(int(os.environ.get('RECOGNITION_TIMEOUT_SECONDS', 0)) or 1800)
+
     found_lines, url_contains_results, text_contains_result = keyframe_finder.process_keyframes()
+
+    signal.alarm(0)
 
     return {
         'SearchPhrasesFound': found_lines,
