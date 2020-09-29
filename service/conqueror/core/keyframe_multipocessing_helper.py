@@ -20,17 +20,9 @@ class KeyframeMultiprocessingHelper:
         self.found_lines = set()
         self.min_word_confidence = 0
 
-        # image preprocessing
-        self.use_gray_colors = False
-        self.invert_colors = False
-        self.use_morphology = False
-        self.use_threshold_with_gausian_blur = False
-        self.use_adaptiveThreshold = False
-        self.increase_image_contrast = False
-
         self.__load_recognition_settings(kwargs.get('recognition_settings', {}))
 
-    def __call__(self, frame: ndarray, result_queue: Queue, process_id,  *args, **kwargs):
+    def __call__(self, frame: ndarray, result_queue: Queue,  *args, **kwargs):
         self.frame = frame
 
         image = self.__image_preprocessing()
@@ -144,27 +136,16 @@ class KeyframeMultiprocessingHelper:
         return image
 
     def __load_recognition_settings(self, recognition_settings: dict) -> None:
-        settings = recognition_settings.keys()
-        if "skip_frames" in settings:
-            self.skip_frames = recognition_settings["skip_frames"]
+        self.use_gray_colors = recognition_settings.get("use_gray_colors", False)
 
-        if "use_gray_colors" in settings:
-            self.use_gray_colors = recognition_settings["use_gray_colors"]
+        self.invert_colors = recognition_settings.get("invert_colors", False)
 
-        if "invert_colors" in settings:
-            self.invert_colors = recognition_settings["invert_colors"]
+        self.use_morphology = recognition_settings.get("use_morphology", False)
 
-        if "use_morphology" in settings:
-            self.use_morphology = recognition_settings["use_morphology"]
+        self.use_threshold_with_gausian_blur = recognition_settings.get("use_threshold_with_gausian_blur", False)
 
-        if "use_threshold_with_gausian_blur" in settings:
-            self.use_threshold_with_gausian_blur = recognition_settings["use_threshold_with_gausian_blur"]
+        self.use_adaptiveThreshold = recognition_settings.get("use_adaptiveThreshold", False)
 
-        if "use_adaptiveThreshold" in settings:
-            self.use_adaptiveThreshold = recognition_settings["use_adaptiveThreshold"]
+        self.comparing_similarity_for_phrases = recognition_settings.get("comparing_similarity_for_phrases", False)
 
-        if "comparing_similarity_for_phrases" in settings:
-            self.comparing_similarity_for_phrases = recognition_settings["comparing_similarity_for_phrases"]
-
-        if "increase_image_contrast" in settings:
-            self.increase_image_contrast = recognition_settings["increase_image_contrast"]
+        self.increase_image_contrast = recognition_settings.get("increase_image_contrast", False)

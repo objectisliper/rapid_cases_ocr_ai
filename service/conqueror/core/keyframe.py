@@ -22,17 +22,28 @@ from multiprocessing import Queue
 
 import cv2
 import numpy
-import pytesseract
-from fuzzywuzzy import fuzz
 
 from service.conqueror.core.keyframe_multipocessing_helper import KeyframeMultiprocessingHelper
 
 
 class KeyFrameFinder:
 
+    @property
+    def __video_filter_settings(self):
+        video_filter_setting = '-vf '
+        if self.fps_instead_skip_frames:
+            video_filter_setting += f'fps=fps={self.frame_per_second}'
+        else:
+            video_filter_setting += f'framestep={self.skip_frames}'
+        return video_filter_setting
+
     def __init__(self, motion_threshold=0.5,
                  object_detection_threshold=0.5, search_phrases: [str] = [], url_contains: [str] = [],
                  text_contains: [str] = [], recognition_settings={}, byte_video: bytes = b''):
+
+        self.recognition_settings = recognition_settings
+        self.__load_iteration_settings()
+
         self.found_lines = []
         self.url_contains_result = {}
         self.text_contains_result = {}
@@ -45,7 +56,7 @@ class KeyFrameFinder:
         self.min_word_confidence = 0
         self.threshold = motion_threshold
         self.frame_per_second = 2
-        self.frame_step = 50
+
         self.max_y_position_for_URL = 80
         self.object_detection_threshold = object_detection_threshold
         self.stop_on_first_keyframe_found = False
@@ -72,15 +83,17 @@ class KeyFrameFinder:
 
         final_key_phrase_result = set()
 
-        cpu_count = multiprocessing.cpu_count()
+        cpu_count = multiprocessing.cpu_count() if self.multiprocessing else 1
 
         print(f'Now i will use {cpu_count} core')
 
         result_queue = Queue()
 
-        process_frame = True
+        if multiprocessing:
 
-        os.environ['OMP_THREAD_LIMIT'] = '1'
+            os.environ['OMP_THREAD_LIMIT'] = '1'
+
+        process_frame = True
 
         while process_frame:
 
@@ -117,9 +130,10 @@ class KeyFrameFinder:
 
                 frame_processor = KeyframeMultiprocessingHelper(url_search_keys=self.url_contains_result,
                                                                 text_search_keys=self.text_contains_result,
-                                                                key_phrases=self.search_phrases)
+                                                                key_phrases=self.search_phrases,
+                                                                recognition_settings=self.recognition_settings)
 
-                process = multiprocessing.Process(target=frame_processor, args=(frame, result_queue, i))
+                process = multiprocessing.Process(target=frame_processor, args=(frame, result_queue))
                 process_list.append(process)
                 process.start()
 
@@ -182,8 +196,9 @@ class KeyFrameFinder:
 
         # FFmpeg input PIPE: WebM encoded data as stream of bytes.
         # FFmpeg output PIPE: decoded video frames in BGR format.
+
         process = subprocess.Popen(shlex.split('ffmpeg -i pipe: -f rawvideo -pix_fmt bgr24 -an -sn '
-                                               f'-vf fps=fps={self.frame_per_second} '
+                                               f'{self.__video_filter_settings} '
                                                f'-vsync vfr -q:v 2 pipe:'),
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, bufsize=10 ** 8)
@@ -260,3 +275,10 @@ class KeyFrameFinder:
         report_filename = os.path.join("recognized_frame_" + time_suffix + ".jpg")
 
         cv2.imwrite(report_filename, image)
+
+    def __load_iteration_settings(self):
+        self.skip_frames = self.recognition_settings.get('skip_frames', 50)
+
+        self.fps_instead_skip_frames = self.recognition_settings.get('fps_instead_skip_frames', True)
+
+        self.multiprocessing = self.recognition_settings.get('multiprocessing', True)
