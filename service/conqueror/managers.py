@@ -12,6 +12,7 @@ import base64
 import json
 import os
 import signal
+import sys
 
 from .core.keyframe import KeyFrameFinder
 from .utils import timeout_handler
@@ -35,12 +36,14 @@ def process_video(request_data: str, recognition_settings):
                                      byte_video=base64.b64decode(data['VideoBody']))
 
     # Set timeout for processing
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(int(os.environ.get('RECOGNITION_TIMEOUT_SECONDS', 1800)))
+    if sys.platform.startswith('win32'):
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(int(os.environ.get('RECOGNITION_TIMEOUT_SECONDS', 1800)))
 
     found_lines, url_contains_results, text_contains_result = keyframe_finder.process_keyframes()
 
-    signal.alarm(0)
+    if sys.platform.startswith('win32'):
+        signal.alarm(0)
 
     return {
         'SearchPhrasesFound': found_lines,

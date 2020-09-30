@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import time
 from unittest import TestCase
 from unittest.mock import patch, NonCallableMock
@@ -74,6 +75,8 @@ class ProcessVideoTestCase(TestCase):
     @patch.object(KeyFrameFinder, 'process_keyframes',
                   new_callable=process_keyframe_timeout_function)
     def test_process_video_with_timeout(self, process_keyframes: NonCallableMock):
+        if sys.platform.startswith('win32'):
+            self.skipTest('Because windows is not cool enough')
         test_data = json.dumps({'SearchPhraseIdentifiers': 'test_data_value', 'URLContains': 'test_data',
                                 'TextContains': 'test_data', 'VideoBody': 'test_data'})
         test_settings = {'test_key': 'test_value'}
