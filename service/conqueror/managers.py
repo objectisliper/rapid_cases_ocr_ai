@@ -36,13 +36,13 @@ def process_video(request_data: str, recognition_settings):
                                      byte_video=base64.b64decode(data['VideoBody']))
 
     # Set timeout for processing
-    if sys.platform.startswith('win32'):
+    if not sys.platform.startswith('win32'):
         signal.signal(signal.SIGALRM, timeout_handler)
         signal.alarm(int(os.environ.get('RECOGNITION_TIMEOUT_SECONDS', 1800)))
 
     found_lines, url_contains_results, text_contains_result = keyframe_finder.process_keyframes()
 
-    if sys.platform.startswith('win32'):
+    if not sys.platform.startswith('win32'):
         signal.alarm(0)
 
     return {
