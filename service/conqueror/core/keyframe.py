@@ -50,7 +50,7 @@ class KeyFrameFinder:
         self.byte_video = byte_video
 
         self.save_recognition_data_to_csv = False
-        self.save_image_with_recognized_text = False
+        self.save_image_with_recognized_text = True
 
         self.comparing_similarity_for_phrases = 80
         self.min_word_confidence = 0
@@ -96,24 +96,7 @@ class KeyFrameFinder:
         process_frame = True
 
         while process_frame:
-
-            # image = self.__image_preprocessing(frame)
-
-            # you can try --psm 11 and --psm 6
-            # recognition_data = pytesseract.image_to_data(image, output_type='dict')
-            # recognition_data2 = pytesseract.image_to_data(image, config='--psm 11', output_type='dict')
-            # recognition_data3 = pytesseract.image_to_data(255 - image, output_type='dict')
-
             # Todo Для этого есть переменные окружения, свойства класса использовать для такого - плохо.
-            # if self.save_recognition_data_to_csv:
-            #     self.__save_recognition_csv(recognition_data)
-            #
-            # if self.save_image_with_recognized_text:
-            #     self.__save_recognized_image(frame, recognition_data)
-            # cv2.imshow("image", image)
-            # cv2.waitKey()
-
-            # self.__check_search_rules(recognition_data)
 
             # if self.stop_on_first_keyframe_found:
             #     if len(self.found_lines) > 0:
