@@ -232,15 +232,18 @@ if __name__ == "__main__":
     # test_root_folder = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'live').as_posix()
     test_settings = {}
     # test_settings["skip_frames"] = [10, 15, 20, 25, 30 , 35, 40, 45, 50, 60, 70, 80, 90, 100, 125, 150, 200, 300]
-    test_settings["skip_frames"] = [50]
+    # test_settings["skip_frames"] = [40, 52, 65]
     # test_settings["use_gray_colors"] = [False, True]
     # test_settings["invert_colors"] = [False, True]
     # test_settings["use_morphology"] = [False, True]
     # test_settings["use_threshold_with_gausian_blur"] = [False, True]
+    # test_settings["increase_image_contrast"] = [False, True]
     # test_settings["use_adaptiveThreshold"] = [False, True]
     # test_settings["max_y_position_for_URL"] = [80, 90, 100, 110, 120]
     # test_settings["word_min_confidence"] = [-1, 0, 50, 80, 90, 95]
     # test_settings["comparing_similarity_for_phrases"] = [50, 80, 90]
+    # test_settings["fps_instead_skip_frames"] = [False, True]
+    # test_settings["multiprocessing"] = [False, True]
 
     fullgrid = True
 
@@ -263,7 +266,7 @@ if __name__ == "__main__":
     rp = ReportGenerator()
 
     # single video test
-    # rp.process_videotest((pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'live' / 'ZjZO877mtGfcpprep-sLDKAhC-sYb84A').as_posix())
+    # rp.process_videotest((pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'live' / 'smpi4TeABJ4tKxikbJ27txJbhBmucYYi').as_posix())
 
     if len(test_confugurations) < 1:
         rp.test_process_request___folder(test_root_folder)
