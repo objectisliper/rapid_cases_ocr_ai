@@ -23,7 +23,29 @@ class KeyframeMultiprocessingHelper:
         self.found_lines = set()
         self.min_word_confidence = 0
 
-        self.__load_recognition_settings(kwargs.get('recognition_settings', {}))
+        self.__load_special_recognition_settings(kwargs.get('recognition_settings', {}))
+
+    def __load_special_recognition_settings(self, recognition_settings: dict) -> None:
+        if "use_gray_colors" in recognition_settings:
+            self.use_gray_colors = recognition_settings["use_gray_colors"]
+
+        if "invert_colors" in recognition_settings:
+            self.invert_colors = recognition_settings["invert_colors"]
+
+        if "use_morphology" in recognition_settings:
+            self.use_morphology = recognition_settings["use_morphology"]
+
+        if "use_threshold_with_gausian_blur" in recognition_settings:
+            self.use_threshold_with_gausian_blur = recognition_settings["use_threshold_with_gausian_blur"]
+
+        if "use_adaptiveThreshold" in recognition_settings:
+            self.use_adaptiveThreshold = recognition_settings["use_adaptiveThreshold"]
+
+        if "comparing_similarity_for_phrases" in recognition_settings:
+            self.comparing_similarity_for_phrases = recognition_settings["comparing_similarity_for_phrases"]
+
+        if "increase_image_contrast" in recognition_settings:
+            self.increase_image_contrast = recognition_settings["increase_image_contrast"]
 
     def __call__(self, frame: ndarray, result_queue: Queue,  *args, **kwargs):
         self.frame = frame
@@ -198,25 +220,3 @@ class KeyframeMultiprocessingHelper:
         report_filename = os.path.join("recognized_frame_" + time_suffix + ".jpg")
 
         cv2.imwrite(report_filename, image)
-
-    def __load_recognition_settings(self, recognition_settings: dict) -> None:
-        if "use_gray_colors" in recognition_settings:
-            self.use_gray_colors = recognition_settings["use_gray_colors"]
-
-        if "invert_colors" in recognition_settings:
-            self.invert_colors = recognition_settings["invert_colors"]
-
-        if "use_morphology" in recognition_settings:
-            self.use_morphology = recognition_settings["use_morphology"]
-
-        if "use_threshold_with_gausian_blur" in recognition_settings:
-            self.use_threshold_with_gausian_blur = recognition_settings["use_threshold_with_gausian_blur"]
-
-        if "use_adaptiveThreshold" in recognition_settings:
-            self.use_adaptiveThreshold = recognition_settings["use_adaptiveThreshold"]
-
-        if "comparing_similarity_for_phrases" in recognition_settings:
-            self.comparing_similarity_for_phrases = recognition_settings["comparing_similarity_for_phrases"]
-
-        if "increase_image_contrast" in recognition_settings:
-            self.increase_image_contrast = recognition_settings["increase_image_contrast"]
