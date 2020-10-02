@@ -70,11 +70,11 @@ class KeyframeMultiprocessingHelper:
         # recognition_data2 = pytesseract.image_to_data(image, config='--psm 11', output_type='dict')
         # recognition_data3 = pytesseract.image_to_data(255 - image, output_type='dict')
 
-        # if self.save_recognition_data_to_csv:
-        #     self.__save_recognition_csv(recognition_data)
-        #
-        # if self.save_image_with_recognized_text:
-        #     self.__save_recognized_image(frame, recognition_data)
+        if self.save_recognition_data_to_csv:
+            self.__save_recognition_csv(recognition_data)
+
+        if self.save_image_with_recognized_text:
+            self.__save_recognized_image(frame, recognition_data)
         # cv2.imshow("image", image)
         # cv2.waitKey()
 
