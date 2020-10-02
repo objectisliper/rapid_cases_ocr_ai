@@ -1,4 +1,7 @@
 import copy
+import csv
+import datetime
+import os
 from multiprocessing.queues import Queue
 
 import cv2
@@ -146,6 +149,55 @@ class KeyframeMultiprocessingHelper:
             image = 255 - image
 
         return image
+
+    def __save_recognition_csv(self, recognition_data):
+        time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_filename = os.path.join("recognize_dict" + time_suffix + ".csv")
+        try:
+            with open(report_filename, 'w', encoding='utf-8', newline='') as csv_file:
+                writer = csv.writer(csv_file)
+                writer.writerow(list(recognition_data.keys()))
+                for index, text in enumerate(recognition_data['text']):
+                    row = [recognition_data['level'][index],
+                           recognition_data['page_num'][index],
+                           recognition_data['block_num'][index],
+                           recognition_data['par_num'][index],
+                           recognition_data['line_num'][index],
+                           recognition_data['word_num'][index],
+                           recognition_data['left'][index],
+                           recognition_data['top'][index],
+                           recognition_data['width'][index],
+                           recognition_data['height'][index],
+                           recognition_data['conf'][index],
+                           text]
+                    writer.writerow(row)
+        except IOError:
+            print("I/O error")
+
+    def __save_recognized_image(self, src_image, recognition_data):
+        image = copy.deepcopy(src_image)
+        for i in range(0, len(recognition_data["text"])):
+            # extract the bounding box coordinates of the text region from
+            x = recognition_data["left"][i]
+            y = recognition_data["top"][i]
+            w = recognition_data["width"][i]
+            h = recognition_data["height"][i]
+            # extract the OCR text itself along with the confidence of the
+            # text localization
+            text = recognition_data["text"][i]
+            conf = int(recognition_data["conf"][i])
+            if conf < self.min_word_confidence:
+                continue
+
+            text = "".join([c if ord(c) < 128 else "" for c in text]).strip()
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 1)
+            cv2.putText(image, text, (x, max(10, y - 5)), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.3, (0, 0, 255), 1)
+
+        time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_filename = os.path.join("recognized_frame_" + time_suffix + ".jpg")
+
+        cv2.imwrite(report_filename, image)
 
     def __load_recognition_settings(self, recognition_settings: dict) -> None:
         self.use_gray_colors = recognition_settings.get("use_gray_colors", False)
