@@ -60,6 +60,13 @@ class KeyFrameFinder:
 
         self.templates = {}
 
+    def __load_iteration_settings(self):
+        self.skip_frames = self.recognition_settings.get('skip_frames', 50)
+
+        self.fps_instead_skip_frames = self.recognition_settings.get('fps_instead_skip_frames', True)
+
+        self.multiprocessing = self.recognition_settings.get('multiprocessing', True)
+
     def process_keyframes(self) -> ([str], dict, dict):
         if not self.byte_video:
             return self.found_lines, self.url_contains_result, self.text_contains_result
@@ -197,10 +204,3 @@ class KeyFrameFinder:
 
             # for i in range(70):
             #     process.stdout.read(width * height * 3)
-
-    def __load_iteration_settings(self):
-        self.skip_frames = self.recognition_settings.get('skip_frames', 50)
-
-        self.fps_instead_skip_frames = self.recognition_settings.get('fps_instead_skip_frames', True)
-
-        self.multiprocessing = self.recognition_settings.get('multiprocessing', True)
