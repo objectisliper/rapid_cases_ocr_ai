@@ -18,10 +18,22 @@ class KeyframeMultiprocessingHelper:
         self.text_contains_result = copy.deepcopy(kwargs.get('text_search_keys', {}))
         self.search_phrases = copy.deepcopy(kwargs.get('key_phrases', []))
 
+        # image preprocessing
+        self.use_gray_colors = False
+        self.invert_colors = False
+        self.use_morphology = False
+        self.use_threshold_with_gausian_blur = False
+        self.use_adaptiveThreshold = False
+        self.increase_image_contrast = False
+
+        self.min_word_confidence = 0
         self.max_y_position_for_URL = 80
         self.comparing_similarity_for_phrases = 80
         self.found_lines = set()
         self.min_word_confidence = 0
+
+        self.save_recognition_data_to_csv = False
+        self.save_image_with_recognized_text = False
 
         self.__load_special_recognition_settings(kwargs.get('recognition_settings', {}))
 

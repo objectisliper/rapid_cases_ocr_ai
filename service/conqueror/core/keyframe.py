@@ -45,16 +45,9 @@ class KeyFrameFinder:
         self.text_contains_result = {}
         self.byte_video = byte_video
 
-        self.save_recognition_data_to_csv = False
-        self.save_image_with_recognized_text = True
-
-        self.comparing_similarity_for_phrases = 80
-        self.min_word_confidence = 0
         self.threshold = motion_threshold
-        self.frame_per_second = 2
-
-        self.max_y_position_for_URL = 80
         self.object_detection_threshold = object_detection_threshold
+        self.frame_per_second = 2
         self.stop_on_first_keyframe_found = False
 
         self.search_phrases = search_phrases
