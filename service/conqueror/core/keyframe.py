@@ -46,7 +46,7 @@ class KeyFrameFinder:
 
         self.threshold = motion_threshold
         self.object_detection_threshold = object_detection_threshold
-        self.frame_per_second = 2
+        self.frame_per_second = 0.46   # 0.46 =  every 65 frame if fps=29.95
         self.skip_frames = 65
         self.stop_on_first_keyframe_found = False
         self.fps_instead_skip_frames = True
