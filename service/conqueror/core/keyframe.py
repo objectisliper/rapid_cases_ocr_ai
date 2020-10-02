@@ -38,7 +38,6 @@ class KeyFrameFinder:
                  text_contains: [str] = [], recognition_settings={}, byte_video: bytes = b''):
 
         self.recognition_settings = recognition_settings
-        self.__load_special_iteration_settings(recognition_settings)
 
         self.found_lines = []
         self.url_contains_result = {}
@@ -63,12 +62,14 @@ class KeyFrameFinder:
 
         self.templates = {}
 
+        self.__load_special_iteration_settings(recognition_settings)
+
     def __load_special_iteration_settings(self, recognition_settings):
         if "skip_frames" in recognition_settings:
             self.skip_frames = recognition_settings["skip_frames"]
 
         if "fps_instead_skip_frames" in recognition_settings:
-            self.fps_instead_skip_frames = recognition_settings["skip_frames"]
+            self.fps_instead_skip_frames = recognition_settings["fps_instead_skip_frames"]
 
         if "multiprocessing" in recognition_settings:
             self.multiprocessing = recognition_settings["multiprocessing"]
