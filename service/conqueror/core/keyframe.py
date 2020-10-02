@@ -38,7 +38,7 @@ class KeyFrameFinder:
                  text_contains: [str] = [], recognition_settings={}, byte_video: bytes = b''):
 
         self.recognition_settings = recognition_settings
-        self.__load_iteration_settings()
+        self.__load_special_iteration_settings(recognition_settings)
 
         self.found_lines = []
         self.url_contains_result = {}
@@ -48,7 +48,10 @@ class KeyFrameFinder:
         self.threshold = motion_threshold
         self.object_detection_threshold = object_detection_threshold
         self.frame_per_second = 2
+        self.skip_frames = 65
         self.stop_on_first_keyframe_found = False
+        self.fps_instead_skip_frames = True
+        self.multiprocessing = True
 
         self.search_phrases = search_phrases
 
@@ -60,12 +63,15 @@ class KeyFrameFinder:
 
         self.templates = {}
 
-    def __load_iteration_settings(self):
-        self.skip_frames = self.recognition_settings.get('skip_frames', 50)
+    def __load_special_iteration_settings(self, recognition_settings):
+        if "skip_frames" in recognition_settings:
+            self.skip_frames = recognition_settings["skip_frames"]
 
-        self.fps_instead_skip_frames = self.recognition_settings.get('fps_instead_skip_frames', True)
+        if "fps_instead_skip_frames" in recognition_settings:
+            self.fps_instead_skip_frames = recognition_settings["skip_frames"]
 
-        self.multiprocessing = self.recognition_settings.get('multiprocessing', True)
+        if "multiprocessing" in recognition_settings:
+            self.multiprocessing = recognition_settings["multiprocessing"]
 
     def process_keyframes(self) -> ([str], dict, dict):
         if not self.byte_video:
