@@ -200,16 +200,23 @@ class KeyframeMultiprocessingHelper:
         cv2.imwrite(report_filename, image)
 
     def __load_recognition_settings(self, recognition_settings: dict) -> None:
-        self.use_gray_colors = recognition_settings.get("use_gray_colors", False)
+        if "use_gray_colors" in recognition_settings:
+            self.use_gray_colors = recognition_settings["use_gray_colors"]
 
-        self.invert_colors = recognition_settings.get("invert_colors", False)
+        if "invert_colors" in recognition_settings:
+            self.invert_colors = recognition_settings["invert_colors"]
 
-        self.use_morphology = recognition_settings.get("use_morphology", False)
+        if "use_morphology" in recognition_settings:
+            self.use_morphology = recognition_settings["use_morphology"]
 
-        self.use_threshold_with_gausian_blur = recognition_settings.get("use_threshold_with_gausian_blur", False)
+        if "use_threshold_with_gausian_blur" in recognition_settings:
+            self.use_threshold_with_gausian_blur = recognition_settings["use_threshold_with_gausian_blur"]
 
-        self.use_adaptiveThreshold = recognition_settings.get("use_adaptiveThreshold", False)
+        if "use_adaptiveThreshold" in recognition_settings:
+            self.use_adaptiveThreshold = recognition_settings["use_adaptiveThreshold"]
 
-        self.comparing_similarity_for_phrases = recognition_settings.get("comparing_similarity_for_phrases", False)
+        if "comparing_similarity_for_phrases" in recognition_settings:
+            self.comparing_similarity_for_phrases = recognition_settings["comparing_similarity_for_phrases"]
 
-        self.increase_image_contrast = recognition_settings.get("increase_image_contrast", False)
+        if "increase_image_contrast" in recognition_settings:
+            self.increase_image_contrast = recognition_settings["increase_image_contrast"]
