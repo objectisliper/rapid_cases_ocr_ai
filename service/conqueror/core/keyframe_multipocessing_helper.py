@@ -12,11 +12,11 @@ from pytesseract import pytesseract
 
 class KeyframeMultiprocessingHelper:
 
-    def __init__(self, **kwargs):
+    def __init__(self, url_search_keys={}, text_search_keys={}, key_phrases=[], recognition_settings={}):
 
-        self.url_contains_result = copy.deepcopy(kwargs.get('url_search_keys', {}))
-        self.text_contains_result = copy.deepcopy(kwargs.get('text_search_keys', {}))
-        self.search_phrases = copy.deepcopy(kwargs.get('key_phrases', []))
+        self.url_contains_result = copy.deepcopy(url_search_keys)
+        self.text_contains_result = copy.deepcopy(text_search_keys)
+        self.search_phrases = copy.deepcopy(key_phrases)
 
         # image preprocessing
         self.use_gray_colors = False
@@ -35,7 +35,7 @@ class KeyframeMultiprocessingHelper:
         self.save_recognition_data_to_csv = False
         self.save_image_with_recognized_text = False
 
-        self.__load_special_recognition_settings(kwargs.get('recognition_settings', {}))
+        self.__load_special_recognition_settings(recognition_settings)
 
     def __load_special_recognition_settings(self, recognition_settings: dict) -> None:
         if "use_gray_colors" in recognition_settings:
