@@ -249,7 +249,7 @@ def generate_test_configurations(test_settings, fullgrid=True):
     return test_confugurations
 
 
-def process_configutaions(test_root_folder, test_confugurations):
+def process_configutaions(report_generator, test_root_folder, test_confugurations):
     results = {}
     best_score = 0
     best_time = 99999999999999
@@ -261,7 +261,7 @@ def process_configutaions(test_root_folder, test_confugurations):
     optimum_parameters = ""
     for configuration in test_confugurations:
         report_suffix = get_report_suffix(configuration)
-        total_score, avg_time = rp.test_process_request___folder(test_root_folder, configuration)
+        total_score, avg_time = report_generator.test_process_request___folder(test_root_folder, configuration)
         if total_score > best_score:
             best_score = total_score
             best_score_parameters = report_suffix
@@ -278,13 +278,13 @@ def process_configutaions(test_root_folder, test_confugurations):
             optimum_parameters = report_suffix
 
         results[report_suffix] = [report_suffix, total_score, avg_time, score]
-        rp.save_report(test_root_folder, report_suffix)
+        report_generator.save_report(test_root_folder, report_suffix)
     print("Best score: " + str(best_score) + "           Parameters: " + best_score_parameters)
     print("Best avg time: " + str(best_time) + "           Parameters: " + best_time_parameters)
     print("Optimum: score = " + str(optimum_total_score)
           + "          time = " + str(optimum_time)
           + "          Parameters: " + optimum_parameters)
-    rp.save_many_configuration_report(test_root_folder, results)
+    report_generator.save_many_configuration_report(test_root_folder, results)
 
 
 if __name__ == "__main__":
@@ -316,4 +316,4 @@ if __name__ == "__main__":
         rp.test_process_request___folder(test_root_folder)
         rp.save_report(test_root_folder)
     else:
-        process_configutaions(test_root_folder, test_confugurations)
+        process_configutaions(rp, test_root_folder, test_confugurations)
