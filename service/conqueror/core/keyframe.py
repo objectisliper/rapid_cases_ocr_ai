@@ -92,7 +92,7 @@ class KeyFrameFinder:
 
         result_queue = Queue()
 
-        if multiprocessing:
+        if self.multiprocessing:
 
             os.environ['OMP_THREAD_LIMIT'] = '1'
 
