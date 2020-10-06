@@ -26,6 +26,8 @@ class KeyframeMultiprocessingHelper:
         self.use_adaptiveThreshold = False
         self.increase_image_contrast = False
 
+        self.additional_recognition_inverted_image = False
+
         self.min_word_confidence = 0
         self.max_y_position_for_URL = 80
         self.comparing_similarity_for_phrases = 80
@@ -59,12 +61,19 @@ class KeyframeMultiprocessingHelper:
         if "increase_image_contrast" in recognition_settings:
             self.increase_image_contrast = recognition_settings["increase_image_contrast"]
 
+        if "additional_recognition_inverted_image" in recognition_settings:
+            self.additional_recognition_inverted_image = recognition_settings["additional_recognition_inverted_image"]
+
     def __call__(self, frame: ndarray, result_queue: Queue,  *args, **kwargs):
         self.frame = frame
 
         image = self.__image_preprocessing()
 
         recognition_data = pytesseract.image_to_data(image, config=' SET OMP_THREAD_LIMIT=1 ', output_type='dict',)
+        if self.additional_recognition_inverted_image:
+            inverted_image_recognition_data = pytesseract.image_to_data(255 - image, config=' SET OMP_THREAD_LIMIT=1 ', output_type='dict', )
+
+
         # you can try --psm 11 and --psm 6
         # recognition_data = pytesseract.image_to_data(image, output_type='dict')
         # recognition_data2 = pytesseract.image_to_data(image, config='--psm 11', output_type='dict')
@@ -79,6 +88,8 @@ class KeyframeMultiprocessingHelper:
         # cv2.waitKey()
 
         self.__check_search_rules(recognition_data)
+        if self.additional_recognition_inverted_image:
+            self.__check_search_rules(inverted_image_recognition_data)
 
         result_queue.put((self.url_contains_result, self.text_contains_result, self.found_lines))
 
