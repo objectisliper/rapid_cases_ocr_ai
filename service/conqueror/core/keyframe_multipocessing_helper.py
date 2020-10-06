@@ -168,6 +168,13 @@ class KeyframeMultiprocessingHelper:
     def __image_preprocessing(self) -> ndarray:
         image = self.frame[..., 0]
 
+        if self.increase_image_contrast:
+            contrast = 64
+            f = 131 * (contrast + 127) / (127 * (131 - contrast))
+            alpha_c = f
+            gamma_c = 127 * (1 - f)
+            image = cv2.addWeighted(image, alpha_c, image, 0, gamma_c)
+
         if self.use_adaptiveThreshold:
             image = cv2.adaptiveThreshold(image, 220, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, 2)
 
@@ -182,13 +189,6 @@ class KeyframeMultiprocessingHelper:
             # Morph open to remove noise
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
             image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel, iterations=1)
-
-        if self.increase_image_contrast:
-            contrast = 64
-            f = 131 * (contrast + 127) / (127 * (131 - contrast))
-            alpha_c = f
-            gamma_c = 127 * (1 - f)
-            image = cv2.addWeighted(image, alpha_c, image, 0, gamma_c)
 
         if self.invert_colors:
             image = 255 - image
