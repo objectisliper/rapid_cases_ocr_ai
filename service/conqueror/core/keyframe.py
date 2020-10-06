@@ -194,7 +194,8 @@ class KeyFrameFinder:
 
         process = subprocess.Popen(shlex.split('ffmpeg -i pipe: -f rawvideo -pix_fmt bgr24 -an -sn '
                                                f'{self.__video_filter_settings} '
-                                               f'-vsync vfr -q:v 2 pipe:'),
+                                               f'-vsync vfr -q:v 2 pipe: '
+                                               f'-loglevel warning'),
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, bufsize=10 ** 8)
 
