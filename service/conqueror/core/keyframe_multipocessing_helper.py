@@ -24,9 +24,10 @@ class KeyframeMultiprocessingHelper:
         self.use_morphology = False
         self.use_threshold_with_gausian_blur = False
         self.use_adaptiveThreshold = False
+        self.use_simple_threshold = False
         self.increase_image_contrast = False
 
-        self.additional_recognition_inverted_image = False
+        self.additional_recognition_inverted_image = True
 
         self.min_word_confidence = 0
         self.max_y_position_for_URL = 80
@@ -64,14 +65,23 @@ class KeyframeMultiprocessingHelper:
         if "additional_recognition_inverted_image" in recognition_settings:
             self.additional_recognition_inverted_image = recognition_settings["additional_recognition_inverted_image"]
 
+        if "use_simple_threshold" in recognition_settings:
+            self.use_simple_threshold = recognition_settings["use_simple_threshold"]
+
     def __call__(self, frame: ndarray, result_queue: Queue,  *args, **kwargs):
         self.frame = frame
 
         image = self.__image_preprocessing()
+        if self.additional_recognition_inverted_image:
+            self.frame = 255 - frame
+            threshold = self.use_simple_threshold
+            self.use_simple_threshold = True
+            image2 = self.__image_preprocessing()
+            self.use_simple_threshold = threshold
 
         recognition_data = pytesseract.image_to_data(image, config=' SET OMP_THREAD_LIMIT=1 ', output_type='dict',)
         if self.additional_recognition_inverted_image:
-            inverted_image_recognition_data = pytesseract.image_to_data(255 - image, config=' SET OMP_THREAD_LIMIT=1 ', output_type='dict', )
+            inverted_image_recognition_data = pytesseract.image_to_data(image2, config=' SET OMP_THREAD_LIMIT=1 ', output_type='dict', )
 
 
         # you can try --psm 11 and --psm 6
@@ -183,11 +193,14 @@ class KeyframeMultiprocessingHelper:
 
         if self.use_threshold_with_gausian_blur:
             blur = cv2.GaussianBlur(image, (3, 3), 0)
-            image = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+            image = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+
+        if self.use_simple_threshold:
+            image = cv2.threshold(image, 165, 255, cv2.THRESH_BINARY)[1]
 
         if self.use_morphology:
             # Morph open to remove noise
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
             image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel, iterations=1)
 
         if self.invert_colors:
