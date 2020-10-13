@@ -227,6 +227,66 @@ def get_report_suffix(recognition_settings):
 
     return suffix.lstrip('_')
 
+
+def generate_test_configurations(test_settings, fullgrid=True):
+    test_confugurations = []
+
+    if fullgrid:
+        import itertools
+        allNames = sorted(test_settings)
+        list_of_test_configurations = list(itertools.product(*(test_settings[Name] for Name in allNames)))
+        for configuration_values in list_of_test_configurations:
+            configuration = {}
+            for index, key in enumerate(allNames):
+                configuration[key] = configuration_values[index]
+
+            test_confugurations.append(configuration)
+    else:
+        test_confugurations = [{setting: value}
+                               for setting in test_settings.keys()
+                               for value in test_settings[setting]]
+
+    return test_confugurations
+
+
+def process_configutaions(report_generator, test_root_folder, test_confugurations):
+    results = {}
+    best_score = 0
+    best_time = 99999999999999
+    optimum_score = 0
+    optimum_total_score = 0
+    optimum_time = 9999999999999
+    best_score_parameters = ""
+    best_time_parameters = ""
+    optimum_parameters = ""
+    for configuration in test_confugurations:
+        report_suffix = get_report_suffix(configuration)
+        total_score, avg_time = report_generator.test_process_request___folder(test_root_folder, configuration)
+        if total_score > best_score:
+            best_score = total_score
+            best_score_parameters = report_suffix
+
+        if avg_time < best_time:
+            best_time = avg_time
+            best_time_parameters = report_suffix
+
+        score = total_score + (100 - avg_time * avg_time)
+        if score > optimum_score:
+            optimum_score = score
+            optimum_total_score = total_score
+            optimum_time = avg_time
+            optimum_parameters = report_suffix
+
+        results[report_suffix] = [report_suffix, total_score, avg_time, score]
+        report_generator.save_report(test_root_folder, report_suffix)
+    print("Best score: " + str(best_score) + "           Parameters: " + best_score_parameters)
+    print("Best avg time: " + str(best_time) + "           Parameters: " + best_time_parameters)
+    print("Optimum: score = " + str(optimum_total_score)
+          + "          time = " + str(optimum_time)
+          + "          Parameters: " + optimum_parameters)
+    report_generator.save_many_configuration_report(test_root_folder, results)
+
+
 if __name__ == "__main__":
     test_root_folder = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'different_site_errors').as_posix()
     # test_root_folder = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'live').as_posix()
@@ -245,65 +305,15 @@ if __name__ == "__main__":
     # test_settings["fps_instead_skip_frames"] = [False, True]
     # test_settings["multiprocessing"] = [False, True]
 
-    fullgrid = True
-
-    test_confugurations = []
-    if fullgrid:
-        import itertools
-        allNames = sorted(test_settings)
-        list_of_test_configurations = list(itertools.product(*(test_settings[Name] for Name in allNames)))
-        for configuration_values in list_of_test_configurations:
-            configuration = {}
-            for index, key in enumerate(allNames):
-                configuration[key] = configuration_values[index]
-
-            test_confugurations.append(configuration)
-    else:
-        test_confugurations = [{setting: value}
-                               for setting in test_settings.keys()
-                               for value in test_settings[setting]]
+    test_confugurations = generate_test_configurations(test_settings, fullgrid=True)
 
     rp = ReportGenerator()
 
     # single video test
     # rp.process_videotest((pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'live' / 'smpi4TeABJ4tKxikbJ27txJbhBmucYYi').as_posix())
 
-    if len(test_confugurations) < 1:
+    if len(test_confugurations) <= 1:
         rp.test_process_request___folder(test_root_folder)
         rp.save_report(test_root_folder)
     else:
-        results = {}
-        best_score = 0
-        best_time = 99999999999999
-        optimum_score = 0
-        optimum_total_score = 0
-        optimum_time = 9999999999999
-        best_score_parameters = ""
-        best_time_parameters = ""
-        optimum_parameters = ""
-
-        for configuration in test_confugurations:
-            report_suffix = get_report_suffix(configuration)
-            total_score, avg_time = rp.test_process_request___folder(test_root_folder, configuration)
-            if total_score > best_score:
-                best_score = total_score
-                best_score_parameters = report_suffix
-
-            if avg_time < best_time:
-                best_time = avg_time
-                best_time_parameters = report_suffix
-
-            score = total_score + (100 - avg_time*avg_time)
-            if score > optimum_score:
-                optimum_score = score
-                optimum_total_score = total_score
-                optimum_time = avg_time
-                optimum_parameters = report_suffix
-
-            results[report_suffix] = [report_suffix, total_score, avg_time, score]
-            rp.save_report(test_root_folder, report_suffix)
-
-        print("Best score: " + str(best_score) + "           Parameters: " + best_score_parameters)
-        print("Best avg time: " + str(best_time) + "           Parameters: " + best_time_parameters)
-        print("Optimum: score = " + str(optimum_total_score) + "          time = " + str(optimum_time) + "           Parameters: " + optimum_parameters)
-        rp.save_many_configuration_report(test_root_folder, results)
+        process_configutaions(rp, test_root_folder, test_confugurations)

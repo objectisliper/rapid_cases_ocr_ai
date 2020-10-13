@@ -24,7 +24,10 @@ class KeyframeMultiprocessingHelper:
         self.use_morphology = False
         self.use_threshold_with_gausian_blur = False
         self.use_adaptiveThreshold = False
+        self.use_simple_threshold = False
         self.increase_image_contrast = False
+
+        self.additional_recognition_inverted_image = True
 
         self.min_word_confidence = 0
         self.max_y_position_for_URL = 80
@@ -59,12 +62,28 @@ class KeyframeMultiprocessingHelper:
         if "increase_image_contrast" in recognition_settings:
             self.increase_image_contrast = recognition_settings["increase_image_contrast"]
 
+        if "additional_recognition_inverted_image" in recognition_settings:
+            self.additional_recognition_inverted_image = recognition_settings["additional_recognition_inverted_image"]
+
+        if "use_simple_threshold" in recognition_settings:
+            self.use_simple_threshold = recognition_settings["use_simple_threshold"]
+
     def __call__(self, frame: ndarray, result_queue: Queue,  *args, **kwargs):
         self.frame = frame
 
         image = self.__image_preprocessing()
+        if self.additional_recognition_inverted_image:
+            self.frame = 255 - frame
+            threshold = self.use_simple_threshold
+            self.use_simple_threshold = True
+            image2 = self.__image_preprocessing()
+            self.use_simple_threshold = threshold
 
         recognition_data = pytesseract.image_to_data(image, config=' SET OMP_THREAD_LIMIT=1 ', output_type='dict',)
+        if self.additional_recognition_inverted_image:
+            inverted_image_recognition_data = pytesseract.image_to_data(image2, config=' SET OMP_THREAD_LIMIT=1 ', output_type='dict', )
+
+
         # you can try --psm 11 and --psm 6
         # recognition_data = pytesseract.image_to_data(image, output_type='dict')
         # recognition_data2 = pytesseract.image_to_data(image, config='--psm 11', output_type='dict')
@@ -79,6 +98,8 @@ class KeyframeMultiprocessingHelper:
         # cv2.waitKey()
 
         self.__check_search_rules(recognition_data)
+        if self.additional_recognition_inverted_image:
+            self.__check_search_rules(inverted_image_recognition_data)
 
         result_queue.put((self.url_contains_result, self.text_contains_result, self.found_lines))
 
@@ -157,6 +178,13 @@ class KeyframeMultiprocessingHelper:
     def __image_preprocessing(self) -> ndarray:
         image = self.frame[..., 0]
 
+        if self.increase_image_contrast:
+            contrast = 64
+            f = 131 * (contrast + 127) / (127 * (131 - contrast))
+            alpha_c = f
+            gamma_c = 127 * (1 - f)
+            image = cv2.addWeighted(image, alpha_c, image, 0, gamma_c)
+
         if self.use_adaptiveThreshold:
             image = cv2.adaptiveThreshold(image, 220, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, 2)
 
@@ -165,19 +193,15 @@ class KeyframeMultiprocessingHelper:
 
         if self.use_threshold_with_gausian_blur:
             blur = cv2.GaussianBlur(image, (3, 3), 0)
-            image = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+            image = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+
+        if self.use_simple_threshold:
+            image = cv2.threshold(image, 165, 255, cv2.THRESH_BINARY)[1]
 
         if self.use_morphology:
             # Morph open to remove noise
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
             image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel, iterations=1)
-
-        if self.increase_image_contrast:
-            contrast = 64
-            f = 131 * (contrast + 127) / (127 * (131 - contrast))
-            alpha_c = f
-            gamma_c = 127 * (1 - f)
-            image = cv2.addWeighted(image, alpha_c, image, 0, gamma_c)
 
         if self.invert_colors:
             image = 255 - image

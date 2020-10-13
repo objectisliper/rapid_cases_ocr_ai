@@ -29,7 +29,9 @@ class KeyFrameFinder:
     def __video_filter_settings(self):
         video_filter_setting = '-vf '
         if self.fps_instead_skip_frames:
-            video_filter_setting += f'fps=fps={self.frame_per_second}'
+            # video_filter_setting += f'fps=fps={self.frame_per_second}'
+            # video_filter_setting += f'framerate=fps={self.frame_per_second}'
+            video_filter_setting += f'framerate=fps={1/self.seconds_between_frames}'
         else:
             video_filter_setting += f'framestep={self.skip_frames}'
         return video_filter_setting
@@ -47,7 +49,8 @@ class KeyFrameFinder:
 
         self.threshold = motion_threshold
         self.object_detection_threshold = object_detection_threshold
-        self.frame_per_second = 0.46   # 0.46 =  every 65 frame if fps=29.95
+        self.frame_per_second = 0.33   # 0.46 =  every 65 frame if fps=29.95
+        self.seconds_between_frames = 3.0
         self.skip_frames = 65
         self.stop_on_first_keyframe_found = False
         self.fps_instead_skip_frames = True
@@ -71,6 +74,12 @@ class KeyFrameFinder:
 
         if "fps_instead_skip_frames" in recognition_settings:
             self.fps_instead_skip_frames = recognition_settings["fps_instead_skip_frames"]
+
+        if "frame_per_second" in recognition_settings:
+            self.frame_per_second = recognition_settings["frame_per_second"]
+
+        if "seconds_between_frames" in recognition_settings:
+            self.seconds_between_frames = recognition_settings["seconds_between_frames"]
 
         if "multiprocessing" in recognition_settings:
             self.multiprocessing = recognition_settings["multiprocessing"]
@@ -186,7 +195,8 @@ class KeyFrameFinder:
 
         process = subprocess.Popen(shlex.split('ffmpeg -i pipe: -f rawvideo -pix_fmt bgr24 -an -sn '
                                                f'{self.__video_filter_settings} '
-                                               f'-vsync vfr -q:v 2 pipe:'),
+                                               f'-vsync vfr -q:v 2 pipe: '
+                                               f'-loglevel warning'),
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, bufsize=10 ** 8)
 
