@@ -9,13 +9,14 @@ vyacheslav@behealthy.ai
 import copy
 import io
 import json
-import multiprocessing
 import subprocess
 import threading
 import shlex
 import os
 from functools import partial
+from billiard.context import Process
 from multiprocessing import Queue
+import multiprocessing
 
 import numpy
 
@@ -119,7 +120,7 @@ class KeyFrameFinder:
                                                                 key_phrases=self.search_phrases,
                                                                 recognition_settings=self.recognition_settings)
 
-                process = multiprocessing.Process(target=frame_processor, args=(frame, result_queue))
+                process = Process(target=frame_processor, args=(frame, result_queue))
                 process_list.append(process)
                 process.start()
 
