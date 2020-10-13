@@ -10,12 +10,15 @@ import copy
 import io
 import json
 import subprocess
+import sys
 import threading
 import shlex
 import os
 from functools import partial
-from billiard.context import Process
-from multiprocessing import Queue
+from billiard.context import Process as LinuxProcess
+from billiard.connection import Pipe as LinuxPipe
+from multiprocessing import Process as WindowsProcess
+from multiprocessing import Pipe as WindowsPipe
 import multiprocessing
 
 import numpy
@@ -100,13 +103,15 @@ class KeyFrameFinder:
 
         print(f'Now i will use {cpu_count} core')
 
-        result_queue = Queue()
-
         if self.multiprocessing:
 
             os.environ['OMP_THREAD_LIMIT'] = '1'
 
         process_frame = True
+
+        Pipe = WindowsPipe if sys.platform.startswith('win32') else LinuxPipe
+
+        pipe_return, pipe_receive = Pipe(False)
 
         while process_frame:
             # Todo Для этого есть переменные окружения, свойства класса использовать для такого - плохо.
@@ -129,7 +134,9 @@ class KeyFrameFinder:
                                                                 key_phrases=self.search_phrases,
                                                                 recognition_settings=self.recognition_settings)
 
-                process = Process(target=frame_processor, args=(frame, result_queue))
+                Process = WindowsProcess if sys.platform.startswith('win32') else LinuxProcess
+
+                process = Process(target=frame_processor, args=(frame, pipe_receive))
                 process_list.append(process)
                 process.start()
 
@@ -137,7 +144,7 @@ class KeyFrameFinder:
                 break
 
             for process in process_list:
-                (url_result, text_result, key_phrases_result) = result_queue.get()
+                (url_result, text_result, key_phrases_result) = pipe_return.recv()
 
                 final_url_result = {key: final_url_result[key] or item for key, item in url_result.items()}
 
@@ -148,7 +155,8 @@ class KeyFrameFinder:
             for process in process_list:
                 process.join()
 
-        result_queue.close()
+        pipe_receive.close()
+        pipe_return.close()
 
         return list(final_key_phrase_result), final_url_result, final_text_result
 
