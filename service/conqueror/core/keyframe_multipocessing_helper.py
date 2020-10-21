@@ -68,7 +68,7 @@ class KeyframeMultiprocessingHelper:
         if "use_simple_threshold" in recognition_settings:
             self.use_simple_threshold = recognition_settings["use_simple_threshold"]
 
-    def __call__(self, frame: ndarray, result_queue: Queue,  *args, **kwargs):
+    def __call__(self, frame: ndarray, result_pipe,  *args, **kwargs):
         self.frame = frame
 
         image = self.__image_preprocessing()
@@ -101,7 +101,7 @@ class KeyframeMultiprocessingHelper:
         if self.additional_recognition_inverted_image:
             self.__check_search_rules(inverted_image_recognition_data)
 
-        result_queue.put((self.url_contains_result, self.text_contains_result, self.found_lines))
+        result_pipe.send((self.url_contains_result, self.text_contains_result, self.found_lines))
 
     def __check_search_rules(self, recognition_data):
         url_blocks, page_blocks = self.__get_blocks(recognition_data)
