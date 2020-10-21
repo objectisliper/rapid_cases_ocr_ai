@@ -75,6 +75,9 @@ class ReportGenerator():
             score["SearchPhrasesFound"] = sum / len(expected_response["SearchPhrasesFound"])
             # convert to percents
             score["SearchPhrasesFound"] = score["SearchPhrasesFound"] * 100
+        else:
+            score["SearchPhrasesFound"] = 100
+
 
         score["URLContainsResults"] = self.__calc_TrueFalse_score(expected_response["URLContainsResults"],
                                                                   real_response["URLContainsResults"])
@@ -288,8 +291,9 @@ def process_configutaions(report_generator, test_root_folder, test_confuguration
 
 
 if __name__ == "__main__":
-    test_root_folder = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'different_site_errors').as_posix()
-    # test_root_folder = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'live').as_posix()
+    # test_root_folder = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'different_site_errors').as_posix()
+    test_root_folder = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'live').as_posix()
+    # test_root_folder = (pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'image_preprocessing').as_posix()
     test_settings = {}
     # test_settings["skip_frames"] = [10, 15, 20, 25, 30 , 35, 40, 45, 50, 60, 70, 80, 90, 100, 125, 150, 200, 300]
     # test_settings["skip_frames"] = [40, 52, 65]
@@ -298,21 +302,34 @@ if __name__ == "__main__":
     # test_settings["use_morphology"] = [False, True]
     # test_settings["use_threshold_with_gausian_blur"] = [False, True]
     # test_settings["increase_image_contrast"] = [False, True]
-    # test_settings["use_adaptiveThreshold"] = [False, True]
+    test_settings["use_adaptiveThreshold"] = [False]
+    # test_settings["use_adaptiveThreshold_bottom_side"] = [150, 180, 185, 190, 195, 200, 205, 210, 215, 220, 230, 240, 250]
+    # test_settings["use_adaptiveThreshold_method"] = [0, 1]    # 0 = cv2.ADAPTIVE_THRESH_MEAN_C  1 = cv2.ADAPTIVE_THRESH_GAUSSIAN_C
+    # test_settings["use_simple_threshold"] = [False]
+    # test_settings["use_simple_threshold_bottom_side"] = [0, 1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 115, 130, 145, 160, 175, 190, 200, 225, 250]
+    # test_settings["use_simple_threshold_bottom_side"] = [195]
+    # test_settings["use_simple_threshold_bottom_side_new_value"] = [0]   # 1 = cv2.THRESH_BINARY_INV,   0 = cv2.THRESH_BINARY]
+    # test_settings["use_morphology_for_inverted_image"] = [False, True]
+    # test_settings["use_threshold_for_inverted_image"] = [False, True]
     # test_settings["max_y_position_for_URL"] = [80, 90, 100, 110, 120]
     # test_settings["word_min_confidence"] = [-1, 0, 50, 80, 90, 95]
     # test_settings["comparing_similarity_for_phrases"] = [50, 80, 90]
+    # test_settings["frame_per_second"] = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.33, 0.36, 0.38, 0.4, 0.425, 0.45, 0.5, 0.6, 0.7, 0.85, 1.0, 1.25, 1.5, 1.75, 2, 3, 4, 5, 7, 10, 15, 20, 30]
+    # test_settings["frame_per_second"] = [0.3, 0.4]
+    test_settings["seconds_between_frames"] = [1]
+    # test_settings["seconds_between_frames"] = [4.5, 4.3, 4.2, 4.1, 4, 3.9, 3.8, 3.7, 3.6, 3.5, 3.4, 3.3, 3.2, 3.1, 3]
     # test_settings["fps_instead_skip_frames"] = [False, True]
-    # test_settings["multiprocessing"] = [False, True]
+    test_settings["multiprocessing"] = [True]
+    # test_settings["additional_recognition_inverted_image"] = [True, False]
 
     test_confugurations = generate_test_configurations(test_settings, fullgrid=True)
 
     rp = ReportGenerator()
 
     # single video test
-    # rp.process_videotest((pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'live' / 'smpi4TeABJ4tKxikbJ27txJbhBmucYYi').as_posix())
+    # test_result, duration, score = rp.process_videotest((pathlib.Path(__file__).parent.parent / 'integration_tests_video' / 'live' / 'qLFav6-VLrZdUnfVOzi3qwW8f2-a0gxn').as_posix())
 
-    if len(test_confugurations) <= 1:
+    if len(test_confugurations) < 1:
         rp.test_process_request___folder(test_root_folder)
         rp.save_report(test_root_folder)
     else:
