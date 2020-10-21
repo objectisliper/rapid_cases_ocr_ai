@@ -23,11 +23,18 @@ class KeyframeMultiprocessingHelper:
         self.invert_colors = False
         self.use_morphology = False
         self.use_threshold_with_gausian_blur = False
-        self.use_adaptiveThreshold = False
-        self.use_simple_threshold = False
         self.increase_image_contrast = False
+        self.use_adaptiveThreshold = False
+        self.use_adaptiveThreshold_bottom_side = 205
+        self.use_adaptiveThreshold_method = cv2.ADAPTIVE_THRESH_MEAN_C
 
-        self.additional_recognition_inverted_image = True
+        self.use_simple_threshold = False
+        self.use_simple_threshold_bottom_side = 195
+        self.use_simple_threshold_bottom_side_new_value = cv2.THRESH_BINARY
+
+        self.additional_recognition_inverted_image = False
+        self.use_threshold_for_inverted_image = True
+        self.use_morphology_for_inverted_image = False
 
         self.min_word_confidence = 0
         self.max_y_position_for_URL = 80
@@ -68,16 +75,56 @@ class KeyframeMultiprocessingHelper:
         if "use_simple_threshold" in recognition_settings:
             self.use_simple_threshold = recognition_settings["use_simple_threshold"]
 
+        if "use_threshold_for_inverted_image" in recognition_settings:
+            self.use_threshold_for_inverted_image = recognition_settings["use_threshold_for_inverted_image"]
+
+        if "use_morphology_for_inverted_image" in recognition_settings:
+            self.use_morphology_for_inverted_image = recognition_settings["use_morphology_for_inverted_image"]
+
+        if "use_simple_threshold_bottom_side" in recognition_settings:
+            self.use_simple_threshold_bottom_side = recognition_settings["use_simple_threshold_bottom_side"]
+
+        if "use_simple_threshold_bottom_side_new_value" in recognition_settings:
+            self.use_simple_threshold_bottom_side_new_value = recognition_settings["use_simple_threshold_bottom_side_new_value"]
+
+        if "use_adaptiveThreshold_bottom_side" in recognition_settings:
+            self.use_adaptiveThreshold_bottom_side = recognition_settings["use_adaptiveThreshold_bottom_side"]
+
+        if "use_adaptiveThreshold_method" in recognition_settings:
+            self.use_adaptiveThreshold_method = recognition_settings["use_adaptiveThreshold_method"]
+
+
     def __call__(self, frame: ndarray, result_pipe,  *args, **kwargs):
         self.frame = frame
 
         image = self.__image_preprocessing()
         if self.additional_recognition_inverted_image:
+            # invert colors
             self.frame = 255 - frame
+
+            # save current image_preprocessing settings values
             threshold = self.use_simple_threshold
-            self.use_simple_threshold = True
+            threshold_bottom_side = self.use_simple_threshold_bottom_side
+            threshold_new_value = self.use_simple_threshold_bottom_side_new_value
+            morphology = self.use_morphology
+            adaptiveThreshold = self.use_adaptiveThreshold
+
+            # enabling setting
+            self.use_simple_threshold = self.use_threshold_for_inverted_image
+            self.use_morphology = self.use_morphology_for_inverted_image
+            self.use_simple_threshold_bottom_side = 165
+            self.use_simple_threshold_bottom_side_new_value = cv2.THRESH_BINARY
+            self.adaptiveThreshold = False
+
             image2 = self.__image_preprocessing()
+
+            # return preprocessing setting to previous values
             self.use_simple_threshold = threshold
+            self.use_morphology = morphology
+            self.use_simple_threshold_bottom_side = threshold_bottom_side
+            self.use_simple_threshold_bottom_side_new_value = threshold_new_value
+            self.adaptiveThreshold = adaptiveThreshold
+
 
         recognition_data = pytesseract.image_to_data(image, config=' SET OMP_THREAD_LIMIT=1 ', output_type='dict',)
         if self.additional_recognition_inverted_image:
@@ -94,6 +141,8 @@ class KeyframeMultiprocessingHelper:
 
         if self.save_image_with_recognized_text:
             self.__save_recognized_image(frame, recognition_data)
+            if self.additional_recognition_inverted_image:
+                self.__save_recognized_image(frame, inverted_image_recognition_data, additional_suffix="_inverted_")
         # cv2.imshow("image", image)
         # cv2.waitKey()
 
@@ -186,7 +235,9 @@ class KeyframeMultiprocessingHelper:
             image = cv2.addWeighted(image, alpha_c, image, 0, gamma_c)
 
         if self.use_adaptiveThreshold:
-            image = cv2.adaptiveThreshold(image, 220, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, 2)
+            # image = cv2.adaptiveThreshold(image, 220, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, 2)
+            image = cv2.adaptiveThreshold(image, self.use_adaptiveThreshold_bottom_side, self.use_adaptiveThreshold_method, cv2.THRESH_BINARY, 15, 2)
+
 
         if self.use_gray_colors:
             image = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
@@ -196,7 +247,7 @@ class KeyframeMultiprocessingHelper:
             image = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
 
         if self.use_simple_threshold:
-            image = cv2.threshold(image, 165, 255, cv2.THRESH_BINARY)[1]
+            image = cv2.threshold(image, self.use_simple_threshold_bottom_side, 255, self.use_simple_threshold_bottom_side_new_value)[1]
 
         if self.use_morphology:
             # Morph open to remove noise
@@ -232,7 +283,7 @@ class KeyframeMultiprocessingHelper:
         except IOError:
             print("I/O error")
 
-    def __save_recognized_image(self, src_image, recognition_data):
+    def __save_recognized_image(self, src_image, recognition_data, additional_suffix=""):
         image = copy.deepcopy(src_image)
         for i in range(0, len(recognition_data["text"])):
             # extract the bounding box coordinates of the text region from
@@ -252,7 +303,7 @@ class KeyframeMultiprocessingHelper:
             cv2.putText(image, text, (x, max(10, y - 5)), cv2.FONT_HERSHEY_SIMPLEX,
                         0.3, (0, 0, 255), 1)
 
-        time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_filename = os.path.join("recognized_frame_" + time_suffix + ".jpg")
+        time_suffix = datetime.datetime.now().strftime("%Y%m%d_%H%M%S%f")
+        report_filename = os.path.join("recognized_frame_" + additional_suffix + time_suffix + ".jpg")
 
         cv2.imwrite(report_filename, image)
